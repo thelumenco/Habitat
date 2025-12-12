@@ -140,6 +140,16 @@
       from { transform: rotate(0deg); }
       to { transform: rotate(180deg); }
     }
+    @keyframes personLook {
+      0%, 100% { transform: translateX(0px); }
+      25% { transform: translateX(-2px); }
+      50% { transform: translateX(0px); }
+      75% { transform: translateX(2px); }
+    }
+    .vision-person {
+      display: inline-block;
+      animation: personLook 4s ease-in-out infinite;
+    }
     .subtitle { font-size: 10px; color: #64748b; letter-spacing: 0.1em; text-transform: uppercase; line-height: 1.8; }
     .points-box { position: relative; }
     .points-bg { position: absolute; inset: -4px; background: linear-gradient(135deg, #cbd5e1, #94a3b8); z-index: 0; }
@@ -376,10 +386,16 @@
       font-weight: 300;
       font-size: 14px;
       margin-bottom: 24px;
+      font-family: inherit;
+      line-height: 1.5;
     }
     .modal-input:focus {
       outline: none;
       border-color: #0f172a;
+    }
+    textarea.modal-input {
+      resize: vertical;
+      min-height: 120px;
     }
     
     .tabs {
@@ -389,7 +405,7 @@
       padding: 4px;
       margin-bottom: 32px;
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 4px;
     }
     .tab {
@@ -602,6 +618,10 @@
             <div class="help-text">For the best experience, add Habitat to your home screen. On Chrome (Android): Tap the three dots (⋮) at top right, then "Add to Home screen". On Safari (iPhone): Tap the Share button, scroll down and tap "Add to Home Screen". The app will open like a native app without browser bars.</div>
           </div>
           <div class="help-section">
+            <div class="help-title">Envisioning Your Future Self</div>
+            <div class="help-text">The Vision tab helps you visualize who you want to become in 6 months. This gives context and meaning to the habits you're building—each action becomes a step toward that future self. Note: The preset habits that come with the app are generic, so customize them to align with your personal vision. Add, remove, and rename categories and actions to match your unique goals.</div>
+          </div>
+          <div class="help-section">
             <div class="help-title">Personalizing Your Habitat</div>
             <div class="help-text">Click on your name in the header (it says "Friend" by default) to customize it. Type your name and press Enter to save it.</div>
           </div>
@@ -682,7 +702,7 @@
         </button>
       </div>
       <div style="padding: 16px 24px; border-top: 1px solid #e2e8f0; font-size: 10px; color: #94a3b8; text-align: center; font-weight: 300; letter-spacing: 0.05em;">
-        Designed by The Lumen Co.<br>All rights reserved.<br>Version 1.5
+        Designed by The Lumen Co.<br>All rights reserved.<br>Version 1.7
       </div>
     </div>
 
@@ -730,15 +750,29 @@
       </div>
     </div>
 
+    <div class="modal-overlay" id="onboardingModal" style="z-index: 20000;">
+      <div class="modal" style="max-width: 600px;">
+        <div class="modal-title" style="font-size: 18px; margin-bottom: 8px;">✨ Your Future Self</div>
+        <div style="text-align: center; font-size: 12px; color: #64748b; margin-bottom: 24px; font-weight: 300;">Envision who you'll become in 6 months</div>
+        <div id="onboardingContent"></div>
+        <div class="modal-buttons" style="margin-top: 24px;">
+          <button class="modal-btn" onclick="skipOnboarding()" style="flex: 1;">Skip for Now</button>
+          <button class="modal-btn" onclick="nextOnboardingQuestion()" style="background:#0f172a;border-color:#0f172a;color:white;flex: 2;" id="onboardingNextBtn">Next</button>
+        </div>
+      </div>
+    </div>
+
     <div class="tabs">
       <button class="tab active" onclick="switchView('earn')" id="tab-earn">Earn</button>
       <button class="tab" onclick="switchView('rewards')" id="tab-rewards">Rewards</button>
       <button class="tab" onclick="switchView('history')" id="tab-history">History</button>
+      <button class="tab" onclick="switchView('vision')" id="tab-vision">Vision</button>
     </div>
 
     <div id="earnView"></div>
     <div id="rewardsView" class="hidden"></div>
     <div id="historyView" class="hidden"></div>
+    <div id="visionView" class="hidden"></div>
   </div>
 
   <script>
@@ -749,6 +783,15 @@
       showStepsLogger: true,
       categoryOrder: ['workouts', 'steps', 'nutrition', 'hydration', 'selfcare'],
       activeBonus: null,
+      futureVision: {
+        completed: false,
+        lastUpdated: null,
+        q1: '', // What does your ideal day look like six months from now?
+        q2: '', // How do you carry yourself? How do you feel on the inside?
+        q3: '', // What habits define your future self?
+        q4: '', // How do you look? What's your physical presence?
+        q5: ''  // What are you most proud of about who you've become?
+      },
       rewards: [
         { id: 1, name: 'New Pair of Shoes', cost: 500, icon: '👟', redeemed: false },
         { id: 2, name: 'Spa Day', cost: 250, icon: '💆', redeemed: false },
@@ -972,6 +1015,95 @@
 
     const acknowledgements = ["Hell Yeah!", "Love It!", "Let's Go!", "I'm In!", "Absolutely!", "You Bet!"];
 
+    const onboardingQuestions = [
+      { key: 'q1', question: 'What does your ideal day look like six months from now?', placeholder: 'Describe your perfect day...' },
+      { key: 'q2', question: 'How do you carry yourself? How do you feel on the inside?', placeholder: 'Your confidence, energy, emotions...' },
+      { key: 'q3', question: 'What habits define your future self?', placeholder: 'Your daily routines and practices...' },
+      { key: 'q4', question: 'How do you look? What\'s your physical presence like?', placeholder: 'Your appearance, health, vitality...' },
+      { key: 'q5', question: 'What are you most proud of about who you\'ve become?', placeholder: 'Your biggest achievement or transformation...' }
+    ];
+
+    let currentOnboardingQuestion = 0;
+
+    function showOnboarding() {
+      // Only show automatically if not completed
+      if (state.futureVision.completed) {
+        console.log('Onboarding already completed, skipping auto-show');
+        return;
+      }
+      console.log('showOnboarding called, completed:', state.futureVision.completed);
+      currentOnboardingQuestion = 0;
+      renderOnboardingQuestion();
+      const modal = document.getElementById('onboardingModal');
+      console.log('Modal element:', modal);
+      if (modal) {
+        modal.classList.add('show');
+        console.log('Modal classes:', modal.className);
+      }
+    }
+
+    function forceShowOnboarding() {
+      // This version always shows, used by "Edit Your Vision" button
+      currentOnboardingQuestion = 0;
+      renderOnboardingQuestion();
+      const modal = document.getElementById('onboardingModal');
+      if (modal) {
+        modal.classList.add('show');
+      }
+    }
+
+    function renderOnboardingQuestion() {
+      const q = onboardingQuestions[currentOnboardingQuestion];
+      const content = document.getElementById('onboardingContent');
+      const progress = ((currentOnboardingQuestion + 1) / onboardingQuestions.length * 100).toFixed(0);
+      
+      content.innerHTML = `
+        <div style="margin-bottom: 16px;">
+          <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Question ${currentOnboardingQuestion + 1} of ${onboardingQuestions.length}</div>
+          <div style="height: 4px; background: #e2e8f0; border-radius: 2px; overflow: hidden;">
+            <div style="height: 100%; background: #0f172a; width: ${progress}%; transition: width 0.3s;"></div>
+          </div>
+        </div>
+        <div style="font-size: 15px; font-weight: 300; margin-bottom: 16px; line-height: 1.6;">${q.question}</div>
+        <textarea id="onboardingAnswer" class="modal-input" placeholder="${q.placeholder}" style="min-height: 120px; resize: vertical; font-family: inherit;">${state.futureVision[q.key] || ''}</textarea>
+      `;
+      
+      document.getElementById('onboardingNextBtn').textContent = currentOnboardingQuestion === onboardingQuestions.length - 1 ? 'Complete' : 'Next';
+      setTimeout(() => document.getElementById('onboardingAnswer').focus(), 100);
+    }
+
+    function nextOnboardingQuestion() {
+      const answer = document.getElementById('onboardingAnswer').value.trim();
+      const q = onboardingQuestions[currentOnboardingQuestion];
+      
+      state.futureVision[q.key] = answer;
+      
+      if (currentOnboardingQuestion < onboardingQuestions.length - 1) {
+        currentOnboardingQuestion++;
+        renderOnboardingQuestion();
+      } else {
+        completeOnboarding();
+      }
+    }
+
+    function completeOnboarding() {
+      state.futureVision.completed = true;
+      state.futureVision.lastUpdated = new Date().toLocaleString();
+      saveData();
+      document.getElementById('onboardingModal').classList.remove('show');
+    }
+
+    function skipOnboarding() {
+      state.futureVision.completed = true;
+      saveData();
+      document.getElementById('onboardingModal').classList.remove('show');
+    }
+
+    window.showOnboarding = showOnboarding;
+    window.forceShowOnboarding = forceShowOnboarding;
+    window.nextOnboardingQuestion = nextOnboardingQuestion;
+    window.skipOnboarding = skipOnboarding;
+
     function showRandomQuote() {
       const randomQuoteObj = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
       const randomAck = acknowledgements[Math.floor(Math.random() * acknowledgements.length)];
@@ -1192,6 +1324,15 @@
         showStepsLogger: true,
         categoryOrder: ['workouts', 'steps', 'nutrition', 'hydration', 'selfcare'],
         activeBonus: null,
+        futureVision: {
+          completed: false,
+          lastUpdated: null,
+          q1: '',
+          q2: '',
+          q3: '',
+          q4: '',
+          q5: ''
+        },
         rewards: [
           { id: 1, name: 'New Pair of Shoes', cost: 500, icon: '👟', redeemed: false },
           { id: 2, name: 'Spa Day', cost: 250, icon: '💆', redeemed: false },
@@ -1518,7 +1659,7 @@
     }
 
     function switchView(view) {
-      ['earn', 'rewards', 'history'].forEach(v => {
+      ['earn', 'rewards', 'history', 'vision'].forEach(v => {
         document.getElementById('tab-' + v).classList.remove('active');
         document.getElementById(v + 'View').classList.add('hidden');
       });
@@ -1526,7 +1667,8 @@
       document.getElementById(view + 'View').classList.remove('hidden');
       if (view === 'earn') renderEarn();
       else if (view === 'rewards') renderRewards();
-      else renderHistory();
+      else if (view === 'history') renderHistory();
+      else if (view === 'vision') renderVision();
     }
 
     function renderEarn() {
@@ -1598,6 +1740,42 @@
       container.innerHTML = html;
     }
 
+    function renderVision() {
+      const container = document.getElementById('visionView');
+      const hasContent = state.futureVision.q1 || state.futureVision.q2 || state.futureVision.q3 || state.futureVision.q4 || state.futureVision.q5;
+      
+      let html = '<div class="card" style="background: linear-gradient(to bottom right, rgba(139, 92, 246, 0.05), rgba(59, 130, 246, 0.05));">';
+      html += '<h3 class="card-title">Your Future Self</h3>';
+      html += '<p style="font-size: 12px; color: #64748b; margin-bottom: 8px; font-weight: 300; text-align: center;">This is who you\'re becoming</p>';
+      
+      if (state.futureVision.lastUpdated) {
+        html += '<p style="font-size: 10px; color: #94a3b8; margin-bottom: 24px; font-weight: 300; text-align: center; text-transform: uppercase; letter-spacing: 0.05em;">Last updated on ' + state.futureVision.lastUpdated + '</p>';
+      } else {
+        html += '<div style="margin-bottom: 24px;"></div>';
+      }
+      
+      if (!hasContent) {
+        html += '<p style="text-align:center;color:#94a3b8;padding:48px 0;font-weight:300;font-size:14px">You haven\'t completed your vision yet.</p>';
+        html += '<div style="text-align: center;"><button onclick="forceShowOnboarding()" class="btn">Start Vision Exercise</button></div>';
+      } else {
+        onboardingQuestions.forEach((q, idx) => {
+          const answer = state.futureVision[q.key] || '';
+          html += '<div style="margin-bottom: 24px; padding: 20px; background: rgba(255,255,255,0.7); border: 1px solid #e2e8f0;">';
+          html += '<div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; font-weight: 300;">' + q.question + '</div>';
+          if (answer) {
+            html += '<div style="font-size: 14px; line-height: 1.7; color: #0f172a; font-weight: 300; white-space: pre-wrap;">' + answer + '</div>';
+          } else {
+            html += '<div style="font-size: 14px; line-height: 1.7; color: #94a3b8; font-style: italic;">Not answered yet</div>';
+          }
+          html += '</div>';
+        });
+        html += '<div style="text-align: center; margin-top: 24px;"><button onclick="forceShowOnboarding()" class="btn btn-secondary">Edit Your Vision</button></div>';
+      }
+      
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
     function render() {
       updatePoints();
       if (state.userName) {
@@ -1614,9 +1792,13 @@
 
     // Initialize app - run immediately or when DOM is ready
     if (document.readyState === 'loading') {
-      window.addEventListener('DOMContentLoaded', loadData);
+      window.addEventListener('DOMContentLoaded', () => {
+        loadData();
+        setTimeout(() => showOnboarding(), 500);
+      });
     } else {
       loadData();
+      setTimeout(() => showOnboarding(), 500);
     }
   </script>
 </body>
