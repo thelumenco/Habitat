@@ -125,6 +125,9 @@
     .logo-icon.spinning-ccw {
       animation: logoSpinCCW 3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     }
+    .logo-icon.gentle-spin {
+      animation: logoGentleSpin 2s ease-in-out;
+    }
     @keyframes logoSpinCW {
       from { transform: rotate(0deg); }
       to { transform: rotate(1080deg); }
@@ -132,6 +135,10 @@
     @keyframes logoSpinCCW {
       from { transform: rotate(0deg); }
       to { transform: rotate(-1080deg); }
+    }
+    @keyframes logoGentleSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(180deg); }
     }
     .subtitle { font-size: 10px; color: #64748b; letter-spacing: 0.1em; text-transform: uppercase; line-height: 1.8; }
     .points-box { position: relative; }
@@ -620,11 +627,11 @@
           </div>
           <div class="help-section">
             <div class="help-title">Spin the Logo for a Surprise</div>
-            <div class="help-text">Tap or swipe the hexagon logo next to "HABITAT" for a surprise! You'll get either a motivational quote or a bonus. Swipe left for counter-clockwise spin, swipe right for clockwise spin, or just tap for a random direction.</div>
+            <div class="help-text">Tap or swipe the hexagon logo next to "HABITAT" for a surprise! You'll get either a motivational quote or a bonus.</div>
           </div>
           <div class="help-section">
             <div class="help-title">How Bonuses Work</div>
-            <div class="help-text">When you spin the logo, you have about a 20% chance of receiving a bonus! Instant bonuses (+5 or +10 points) are added immediately. Multiplier bonuses (2x or 3x) activate for your next action only—a golden badge will appear below your name. Once you log an action with a multiplier, it's consumed and disappears. Important: If you delete an action that used a bonus, you won't get the bonus back—bonuses are one-time use only.</div>
+            <div class="help-text">When you spin the logo, you have about a 10% chance of receiving a bonus! Instant bonuses (+3 or +5 points) are added immediately. Multiplier bonuses (2x or 3x) activate for your next action only—a golden badge will appear below your name. Once you log an action with a multiplier, it's consumed and disappears. Important: If you delete an action that used a bonus, you won't get the bonus back—bonuses are one-time use only.</div>
           </div>
           <div class="help-section">
             <div class="help-title">Export & Import Data</div>
@@ -675,7 +682,7 @@
         </button>
       </div>
       <div style="padding: 16px 24px; border-top: 1px solid #e2e8f0; font-size: 10px; color: #94a3b8; text-align: center; font-weight: 300; letter-spacing: 0.05em;">
-        Designed by The Lumen Co.<br>All rights reserved.<br>Version 1.3
+        Designed by The Lumen Co.<br>All rights reserved.<br>Version 1.5
       </div>
     </div>
 
@@ -936,11 +943,31 @@
       { quote: "Small daily improvements are the key to staggering long-term results.", author: "Unknown", type: "quote" },
       { quote: "The secret of getting ahead is getting started.", author: "Mark Twain", type: "quote" },
       { quote: "It's not about having time. It's about making time.", author: "Unknown", type: "quote" },
-      // Bonuses (20% of total - 4 bonuses, 16 quotes)
+      { quote: "The only impossible journey is the one you never begin.", author: "Tony Robbins", type: "quote" },
+      { quote: "Fall seven times, stand up eight.", author: "Japanese Proverb", type: "quote" },
+      { quote: "Transformation happens one choice at a time.", author: "Unknown", type: "quote" },
+      { quote: "Your future self will thank you for the good habits you build today.", author: "Unknown", type: "quote" },
+      { quote: "Be stronger than your excuses.", author: "Unknown", type: "quote" },
+      { quote: "The journey of a thousand miles begins with a single step.", author: "Lao Tzu", type: "quote" },
+      { quote: "Consistency is the true foundation of trust.", author: "Roy T. Bennett", type: "quote" },
+      { quote: "Action is the foundational key to all success.", author: "Pablo Picasso", type: "quote" },
+      { quote: "What you do today can improve all your tomorrows.", author: "Ralph Marston", type: "quote" },
+      { quote: "The future depends on what you do today.", author: "Mahatma Gandhi", type: "quote" },
+      { quote: "Good habits are worth being fanatical about.", author: "John Irving", type: "quote" },
+      { quote: "We are what we repeatedly do. Excellence, then, is not an act, but a habit.", author: "Will Durant", type: "quote" },
+      { quote: "Change might not be fast and it isn't always easy. But with time and effort, almost any habit can be reshaped.", author: "Charles Duhigg", type: "quote" },
+      { quote: "First forget inspiration. Habit is more dependable.", author: "Octavia Butler", type: "quote" },
+      { quote: "You'll never change your life until you change something you do daily.", author: "John C. Maxwell", type: "quote" },
+      { quote: "The difference between who you are and who you want to be is what you do.", author: "Unknown", type: "quote" },
+      { quote: "A small daily task, if it be really daily, will beat the labours of a spasmodic Hercules.", author: "Anthony Trollope", type: "quote" },
+      { quote: "We first make our habits, and then our habits make us.", author: "John Dryden", type: "quote" },
+      { quote: "Depending on what they are, our habits will either make us or break us.", author: "Denis Waitley", type: "quote" },
+      { quote: "The chains of habit are too weak to be felt until they are too strong to be broken.", author: "Samuel Johnson", type: "quote" },
+      // Bonuses (10% of total - 4 bonuses, 36 quotes = 40 total)
       { quote: "Bonus activated! Your next action is worth DOUBLE points!", author: "Bonus Round", type: "bonus", bonusType: "multiplier", bonusValue: 2 },
       { quote: "Triple threat! Your next action is worth 3X points!", author: "Bonus Round", type: "bonus", bonusType: "multiplier", bonusValue: 3 },
       { quote: "Instant reward! You just earned 5 bonus points!", author: "Bonus Round", type: "bonus", bonusType: "instant", bonusValue: 5 },
-      { quote: "Lucky spin! You just earned 10 bonus points!", author: "Bonus Round", type: "bonus", bonusType: "instant", bonusValue: 10 }
+      { quote: "Lucky spin! You just earned 3 bonus points!", author: "Bonus Round", type: "bonus", bonusType: "instant", bonusValue: 3 }
     ];
 
     const acknowledgements = ["Hell Yeah!", "Love It!", "Let's Go!", "I'm In!", "Absolutely!", "You Bet!"];
@@ -1014,6 +1041,18 @@
       let startY = 0;
       let startTime = 0;
       let isSwiping = false;
+      
+      // Gentle auto-spin every 5 seconds
+      setInterval(() => {
+        // Don't auto-spin if already spinning
+        if (logo.classList.contains('spinning-cw') || logo.classList.contains('spinning-ccw') || logo.classList.contains('gentle-spin')) {
+          return;
+        }
+        logo.classList.add('gentle-spin');
+        setTimeout(() => {
+          logo.classList.remove('gentle-spin');
+        }, 2000);
+      }, 5000);
       
       logo.addEventListener('touchstart', (e) => {
         startX = e.touches[0].clientX;
