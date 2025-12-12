@@ -513,7 +513,7 @@
     }
     .action-delete-btn {
       position: absolute;
-      right: 0;
+      right: -80px;
       top: 0;
       bottom: 0;
       width: 80px;
@@ -528,6 +528,10 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: right 0.3s ease;
+    }
+    .action-item.swiped .action-delete-btn {
+      right: 0;
     }
     .action-delete-btn:hover {
       background: #1e293b;
