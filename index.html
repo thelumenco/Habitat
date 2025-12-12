@@ -409,7 +409,7 @@
       padding: 4px;
       margin-bottom: 32px;
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
       gap: 4px;
     }
     .tab {
@@ -623,7 +623,7 @@
           </div>
           <div class="help-section">
             <div class="help-title">Envisioning Your Future Self</div>
-            <div class="help-text">The Vision tab helps you visualize who you want to become in 6 months. This gives context and meaning to the habits you're building—each action becomes a step toward that future self. Note: The preset habits that come with the app are generic, so customize them to align with your personal vision. Add, remove, and rename categories and actions to match your unique goals.</div>
+            <div class="help-text">The Vision tab helps you visualize who you want to become in 6 months. This gives context and meaning to the habits you're building—each action becomes a step toward that future self. If you're using this app for something other than personal health habits (like household routines, for example), you can toggle off the Vision tab in Settings if you don't need it. Note: The preset habits that come with the app are generic, so customize them to align with your personal vision. Add, remove, and rename categories and actions to match your unique goals.</div>
           </div>
           <div class="help-section">
             <div class="help-title">Personalizing Your Habitat</div>
@@ -695,6 +695,10 @@
         <button onclick="toggleStepsLogger()" class="settings-btn" id="stepsToggleBtn">
           <span class="emoji">○</span>
           <span id="stepsToggleText">Hide Steps Logger</span>
+        </button>
+        <button onclick="toggleVisionTab()" class="settings-btn" id="visionToggleBtn">
+          <span class="emoji">○</span>
+          <span id="visionToggleText">Hide Vision Tab</span>
         </button>
         <a href="/cdn-cgi/l/email-protection#6209070a22040710060d15040706004f010d" class="settings-btn" style="text-decoration: none; color: inherit;">
           <span class="emoji">✉</span>
@@ -784,6 +788,7 @@
       history: [],
       userName: 'Friend',
       showStepsLogger: true,
+      showVisionTab: true,
       categoryOrder: ['workouts', 'steps', 'nutrition', 'hydration', 'selfcare'],
       activeBonus: null,
       futureVision: {
@@ -898,6 +903,27 @@
       const text = document.getElementById('stepsToggleText');
       if (text) {
         text.textContent = state.showStepsLogger ? 'Hide Steps Logger' : 'Show Steps Logger';
+      }
+    }
+
+    function toggleVisionTab() {
+      state.showVisionTab = !state.showVisionTab;
+      saveData();
+      updateVisionTabVisibility();
+      updateVisionToggleButton();
+    }
+
+    function updateVisionToggleButton() {
+      const text = document.getElementById('visionToggleText');
+      if (text) {
+        text.textContent = state.showVisionTab ? 'Hide Vision Tab' : 'Show Vision Tab';
+      }
+    }
+
+    function updateVisionTabVisibility() {
+      const visionTab = document.getElementById('tab-vision');
+      if (visionTab) {
+        visionTab.style.display = state.showVisionTab ? 'block' : 'none';
       }
     }
 
@@ -1112,8 +1138,12 @@
       // Get the answer value - use userName for name question, otherwise use futureVision
       const answerValue = q.key === 'name' ? state.userName : (state.futureVision[q.key] || '');
       
+      // Show subtitle for vision questions (not for name question)
+      const showSubtitle = q.key !== 'name';
+      
       content.innerHTML = `
         <div style="padding-top: 24px;">
+          ${showSubtitle ? '<div style="font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px; font-weight: 300;">In six months\' time...</div>' : ''}
           <div style="margin-bottom: 16px;">
             <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Question ${currentOnboardingQuestion + 1} of ${onboardingQuestions.length}</div>
             <div style="height: 4px; background: #e2e8f0; border-radius: 2px; overflow: hidden;">
@@ -1431,6 +1461,7 @@
         history: [],
         userName: 'Friend',
         showStepsLogger: true,
+        showVisionTab: true,
         categoryOrder: ['workouts', 'steps', 'nutrition', 'hydration', 'selfcare'],
         activeBonus: null,
         futureVision: {
@@ -1897,6 +1928,8 @@
         if (inputElem) inputElem.value = state.userName;
       }
       updateStepsToggleButton();
+      updateVisionToggleButton();
+      updateVisionTabVisibility();
       updateBonusBadge();
       initLogoSpinner();
       renderEarn();
