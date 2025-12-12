@@ -497,6 +497,49 @@
       align-items: center;
       gap: 8px;
       margin-bottom: 8px;
+      cursor: move;
+      user-select: none;
+      position: relative;
+      overflow: hidden;
+    }
+    .action-item-wrapper {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      transition: transform 0.3s ease;
+    }
+    .action-item.swiped .action-item-wrapper {
+      transform: translateX(-80px);
+    }
+    .action-delete-btn {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 80px;
+      background: #0f172a;
+      color: white;
+      border: none;
+      font-size: 10px;
+      font-weight: 300;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .action-delete-btn:hover {
+      background: #1e293b;
+    }
+    .action-item.dragging {
+      opacity: 0.5;
+    }
+    .action-item.drag-over {
+      border-top: 2px solid #0f172a;
+    }
+    .category-card.drag-over-category {
+      background: rgba(15, 23, 42, 0.05);
     }
     .action-btn {
       flex: 1;
@@ -646,8 +689,8 @@
             <div class="help-text">In the Rewards tab, click "+ Add" to create custom rewards with an emoji, name, and point cost. When you have enough points, click "Redeem" to unlock a reward. Use "Undo" if you change your mind.</div>
           </div>
           <div class="help-section">
-            <div class="help-title">Deleting Items</div>
-            <div class="help-text">Use the 🗑️ button next to any action, reward, or history item to delete it. Note: deleting a history item will subtract those points from your total.</div>
+            <div class="help-title">Managing Presets</div>
+            <div class="help-text">Swipe right on any preset to reveal the delete button. Swipe left to close it. You can also drag and drop presets to reorder them within a category or move them between categories. For rewards and history items, use the 🗑️ button to delete. Note: deleting a history item will subtract those points from your total.</div>
           </div>
           <div class="help-section">
             <div class="help-title">Spin the Logo for a Surprise</div>
@@ -925,6 +968,182 @@
       if (visionTab) {
         visionTab.style.display = state.showVisionTab ? 'block' : 'none';
       }
+    }
+
+    let draggedElement = null;
+    let draggedActionId = null;
+    let draggedFromCategory = null;
+
+    function initDragAndDrop() {
+      const actionItems = document.querySelectorAll('.action-item');
+      const categoryCards = document.querySelectorAll('.category-card');
+
+      actionItems.forEach(item => {
+        item.addEventListener('dragstart', handleDragStart);
+        item.addEventListener('dragend', handleDragEnd);
+        item.addEventListener('dragover', handleDragOver);
+        item.addEventListener('drop', handleDrop);
+        item.addEventListener('dragleave', handleDragLeave);
+        
+        // Add swipe detection
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let isSwiping = false;
+        
+        item.addEventListener('touchstart', (e) => {
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+          isSwiping = false;
+        });
+        
+        item.addEventListener('touchmove', (e) => {
+          if (!touchStartX) return;
+          
+          const touchCurrentX = e.touches[0].clientX;
+          const touchCurrentY = e.touches[0].clientY;
+          const diffX = touchStartX - touchCurrentX;
+          const diffY = Math.abs(touchStartY - touchCurrentY);
+          
+          // Only swipe if horizontal movement is greater than vertical
+          if (Math.abs(diffX) > 10 && Math.abs(diffX) > diffY) {
+            isSwiping = true;
+            e.preventDefault();
+            
+            if (diffX < -30) {
+              // Swipe right - show delete
+              item.classList.add('swiped');
+            } else if (diffX > 30) {
+              // Swipe left - hide delete
+              item.classList.remove('swiped');
+            }
+          }
+        });
+        
+        item.addEventListener('touchend', (e) => {
+          if (isSwiping) {
+            e.preventDefault();
+          }
+          touchStartX = 0;
+          touchStartY = 0;
+        });
+        
+        // Close swipe when clicking outside
+        document.addEventListener('click', (e) => {
+          if (!item.contains(e.target)) {
+            item.classList.remove('swiped');
+          }
+        });
+      });
+
+      categoryCards.forEach(card => {
+        card.addEventListener('dragover', handleCategoryDragOver);
+        card.addEventListener('drop', handleCategoryDrop);
+        card.addEventListener('dragleave', handleCategoryDragLeave);
+      });
+    }
+
+    function handleDragStart(e) {
+      draggedElement = this;
+      draggedActionId = parseInt(this.getAttribute('data-action-id'));
+      draggedFromCategory = this.getAttribute('data-category');
+      this.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function handleDragEnd(e) {
+      this.classList.remove('dragging');
+      document.querySelectorAll('.action-item').forEach(item => {
+        item.classList.remove('drag-over');
+      });
+      document.querySelectorAll('.category-card').forEach(card => {
+        card.classList.remove('drag-over-category');
+      });
+    }
+
+    function handleDragOver(e) {
+      if (e.preventDefault) {
+        e.preventDefault();
+      }
+      e.dataTransfer.dropEffect = 'move';
+      
+      const targetCategory = this.getAttribute('data-category');
+      if (targetCategory === draggedFromCategory) {
+        this.classList.add('drag-over');
+      }
+      return false;
+    }
+
+    function handleDragLeave(e) {
+      this.classList.remove('drag-over');
+    }
+
+    function handleDrop(e) {
+      if (e.stopPropagation) {
+        e.stopPropagation();
+      }
+
+      const targetActionId = parseInt(this.getAttribute('data-action-id'));
+      const targetCategory = this.getAttribute('data-category');
+
+      if (draggedFromCategory === targetCategory && draggedActionId !== targetActionId) {
+        // Reorder within same category
+        const actions = state.actions[targetCategory];
+        const draggedIndex = actions.findIndex(a => a.id === draggedActionId);
+        const targetIndex = actions.findIndex(a => a.id === targetActionId);
+        
+        if (draggedIndex !== -1 && targetIndex !== -1) {
+          const [draggedAction] = actions.splice(draggedIndex, 1);
+          actions.splice(targetIndex, 0, draggedAction);
+          saveData();
+          renderEarn();
+        }
+      }
+
+      return false;
+    }
+
+    function handleCategoryDragOver(e) {
+      if (e.preventDefault) {
+        e.preventDefault();
+      }
+      e.dataTransfer.dropEffect = 'move';
+      this.classList.add('drag-over-category');
+      return false;
+    }
+
+    function handleCategoryDragLeave(e) {
+      if (e.target === this) {
+        this.classList.remove('drag-over-category');
+      }
+    }
+
+    function handleCategoryDrop(e) {
+      if (e.stopPropagation) {
+        e.stopPropagation();
+      }
+
+      const targetCategory = this.getAttribute('data-category');
+
+      if (draggedFromCategory !== targetCategory) {
+        // Move action to different category
+        const draggedAction = state.actions[draggedFromCategory].find(a => a.id === draggedActionId);
+        
+        if (draggedAction) {
+          // Remove from source category
+          state.actions[draggedFromCategory] = state.actions[draggedFromCategory].filter(a => a.id !== draggedActionId);
+          
+          // Add to target category
+          if (!state.actions[targetCategory]) {
+            state.actions[targetCategory] = [];
+          }
+          state.actions[targetCategory].push(draggedAction);
+          
+          saveData();
+          renderEarn();
+        }
+      }
+
+      return false;
     }
 
     function addNewCategory() {
@@ -1825,11 +2044,16 @@
         const color = colors[categoryId] || getCategoryColor(index);
         const isCustom = categoryId.startsWith('custom_');
         
-        html += '<div class="card" style="padding:0;overflow:hidden"><div class="category-header" style="background:' + color.bg + '"><span id="catName-' + categoryId + '" onclick="startRenameCategory(\'' + categoryId + '\')" style="cursor:pointer" title="Click to rename">' + categoryName + '</span><input type="text" id="catInput-' + categoryId + '" value="' + categoryName + '" onblur="finishRenameCategory(\'' + categoryId + '\')" onkeydown="if(event.key===\'Enter\') finishRenameCategory(\'' + categoryId + '\'); if(event.key===\'Escape\') finishRenameCategory(\'' + categoryId + '\')" style="display:none;background:rgba(255,255,255,0.2);border:none;border-bottom:1px solid rgba(255,255,255,0.4);color:white;padding:4px 8px;outline:none"><div style="display:flex;gap:8px;align-items:center">' + (isCustom ? '<button onclick="confirmDeleteCategory(\'' + categoryId + '\')" style="background:transparent;border:none;color:rgba(255,255,255,0.6);cursor:pointer;font-size:14px;padding:4px 8px;transition:all 0.2s" onmouseover="this.style.color=\'rgba(255,255,255,1)\'" onmouseout="this.style.color=\'rgba(255,255,255,0.6)\'" title="Delete category">🗑️</button>' : '') + '<button onclick="toggleAddForm(\'' + categoryId + '\')" class="btn" style="font-size:10px;padding:6px 16px">+ Add</button></div></div>';
+        html += '<div class="card category-card" data-category="' + categoryId + '" style="padding:0;overflow:hidden"><div class="category-header" style="background:' + color.bg + '"><span id="catName-' + categoryId + '" onclick="startRenameCategory(\'' + categoryId + '\')" style="cursor:pointer" title="Click to rename">' + categoryName + '</span><input type="text" id="catInput-' + categoryId + '" value="' + categoryName + '" onblur="finishRenameCategory(\'' + categoryId + '\')" onkeydown="if(event.key===\'Enter\') finishRenameCategory(\'' + categoryId + '\'); if(event.key===\'Escape\') finishRenameCategory(\'' + categoryId + '\')" style="display:none;background:rgba(255,255,255,0.2);border:none;border-bottom:1px solid rgba(255,255,255,0.4);color:white;padding:4px 8px;outline:none"><div style="display:flex;gap:8px;align-items:center">' + (isCustom ? '<button onclick="confirmDeleteCategory(\'' + categoryId + '\')" style="background:transparent;border:none;color:rgba(255,255,255,0.6);cursor:pointer;font-size:14px;padding:4px 8px;transition:all 0.2s" onmouseover="this.style.color=\'rgba(255,255,255,1)\'" onmouseout="this.style.color=\'rgba(255,255,255,0.6)\'" title="Delete category">🗑️</button>' : '') + '<button onclick="toggleAddForm(\'' + categoryId + '\')" class="btn" style="font-size:10px;padding:6px 16px">+ Add</button></div></div>';
         html += '<div id="addForm-' + categoryId + '" class="hidden" style="padding:16px;background:#f8fafc"><div class="form-grid"><input type="text" id="emoji-' + categoryId + '" placeholder="⭐" maxlength="2" class="input emoji-input"><input type="text" id="name-' + categoryId + '" placeholder="Activity name" class="input"><input type="number" id="points-' + categoryId + '" placeholder="Pts" class="input points-input"></div><div style="display:flex;gap:8px"><button onclick="addPreset(\'' + categoryId + '\')" class="btn" style="flex:1">Add</button><button onclick="toggleAddForm(\'' + categoryId + '\')" class="btn btn-secondary">Cancel</button></div></div>';
         html += '<div style="padding:12px">';
         items.forEach(action => {
-          html += '<div class="action-item"><button onclick="logAction(' + action.id + ',\'' + categoryId + '\', event)" class="action-btn"><span style="display:flex;align-items:center"><span class="emoji">' + action.emoji + '</span><span class="name">' + action.name + '</span></span><span class="points">+' + action.points + '</span></button><button onclick="deletePreset(\'' + categoryId + '\',' + action.id + ')" class="delete-btn">🗑️</button></div>';
+          html += '<div class="action-item" draggable="true" data-action-id="' + action.id + '" data-category="' + categoryId + '">';
+          html += '<div class="action-item-wrapper">';
+          html += '<button onclick="logAction(' + action.id + ',\'' + categoryId + '\', event)" class="action-btn" style="width:100%"><span style="display:flex;align-items:center"><span class="emoji">' + action.emoji + '</span><span class="name">' + action.name + '</span></span><span class="points">+' + action.points + '</span></button>';
+          html += '</div>';
+          html += '<button onclick="deletePreset(\'' + categoryId + '\',' + action.id + ')" class="action-delete-btn">Delete</button>';
+          html += '</div>';
         });
         html += '</div></div>';
       });
@@ -1837,6 +2061,7 @@
       html += '<div class="card" style="text-align:center;padding:32px"><button onclick="addNewCategory()" class="btn" style="width:100%">+ Add New Category</button></div>';
       
       container.innerHTML = html;
+      initDragAndDrop();
     }
 
     function renderRewards() {
