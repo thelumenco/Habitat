@@ -522,9 +522,9 @@
               </svg>
             </span>
           </div>
-          <div class="subtitle">Building an ecosystem of positive actions</div>
-          <div class="greeting" style="font-size: 10px; color: #64748b; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 8px; font-weight: 300; line-height: 1.8;">
-            Hi, <span id="userNameDisplay" onclick="startEditName()" style="cursor: pointer; border-bottom: 1px dotted #cbd5e1;" title="Click to edit name">Friend</span><input type="text" id="userNameInput" value="Friend" onblur="finishEditName()" onkeydown="if(event.key==='Enter') finishEditName(); if(event.key==='Escape') finishEditName()" style="display:none; background:transparent; border:none; border-bottom:1px solid #cbd5e1; color:#64748b; padding:0; outline:none; font-size:10px; font-weight:300; letter-spacing:0.1em; text-transform:uppercase; width:100px">!
+          <div class="subtitle">Cultivate positive momentum</div>
+          <div class="greeting" style="font-size: 10px; color: #475569; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 8px; font-weight: 400; line-height: 1.8;">
+            Hi, <span id="userNameDisplay" onclick="startEditName()" style="cursor: pointer; border-bottom: 1px dotted #cbd5e1;" title="Click to edit name">Friend</span><input type="text" id="userNameInput" value="Friend" onblur="finishEditName()" onkeydown="if(event.key==='Enter') finishEditName(); if(event.key==='Escape') finishEditName()" style="display:none; background:transparent; border:none; border-bottom:1px solid #cbd5e1; color:#475569; padding:0; outline:none; font-size:10px; font-weight:400; letter-spacing:0.1em; text-transform:uppercase; width:100px">!
           </div>
         </div>
         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
@@ -585,6 +585,28 @@
           <div class="help-section">
             <div class="help-title">Export & Import Data</div>
             <div class="help-text">Export your data to save a backup as a JSON file. Import allows you to restore from a previously exported file. This is useful for transferring data between devices or keeping backups.</div>
+          </div>
+        </div>
+        <button onclick="toggleAbout()" class="settings-btn" id="aboutBtn">
+          <span class="emoji" id="aboutIcon">▼</span>
+          <span>Why HABITAT?</span>
+        </button>
+        <div id="aboutContent" class="help-content">
+          <div class="help-section">
+            <div class="help-title">Habit Accumulation Tracker</div>
+            <div class="help-text">HABITAT stands for Habit Accumulation Tracker—a tool designed to help you build positive routines through consistent action and earned rewards.</div>
+          </div>
+          <div class="help-section">
+            <div class="help-title">A Natural Environment for Growth</div>
+            <div class="help-text">The name also alludes to the idea of a habitat being a natural environment. Rather than feeling forced, your habits are designed into your environment, making positive actions feel organic and sustainable.</div>
+          </div>
+          <div class="help-section">
+            <div class="help-title">An Ecosystem of Positive Actions</div>
+            <div class="help-text">HABITAT works twofold: it helps you both build habits and hold off on impulse decisions by positioning them as rewards that you earn permission for. This creates an ecosystem where every action contributes to your growth, and indulgences become intentional celebrations of your progress.</div>
+          </div>
+          <div class="help-section">
+            <div class="help-title">Works with "No Zero Days"</div>
+            <div class="help-text">HABITAT pairs perfectly with the "No Zero Days" approach to habit-building. Create actions for min, medium, and max levels of each habit and assign points accordingly. For example: "10 min workout" (5 pts), "30 min workout" (15 pts), "Full gym session" (25 pts). This way, doing something is always better than nothing, and you're rewarded proportionally for your effort.</div>
           </div>
         </div>
         <button onclick="exportData(); toggleSettings();" class="settings-btn">
@@ -701,6 +723,18 @@
         helpIcon.textContent = '▲';
       } else {
         helpIcon.textContent = '▼';
+      }
+    }
+
+    function toggleAbout() {
+      const aboutContent = document.getElementById('aboutContent');
+      const aboutIcon = document.getElementById('aboutIcon');
+      aboutContent.classList.toggle('show');
+      
+      if (aboutContent.classList.contains('show')) {
+        aboutIcon.textContent = '▲';
+      } else {
+        aboutIcon.textContent = '▼';
       }
     }
 
