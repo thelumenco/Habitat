@@ -109,10 +109,29 @@
       height: 28px;
       position: relative;
       top: -1px;
+      cursor: pointer;
+      transition: transform 0.1s;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
     }
     .logo-icon svg {
       width: 100%;
       height: 100%;
+    }
+    .logo-icon.spinning-cw {
+      animation: logoSpinCW 3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .logo-icon.spinning-ccw {
+      animation: logoSpinCCW 3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    @keyframes logoSpinCW {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(1080deg); }
+    }
+    @keyframes logoSpinCCW {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(-1080deg); }
     }
     .subtitle { font-size: 10px; color: #64748b; letter-spacing: 0.1em; text-transform: uppercase; line-height: 1.8; }
     .points-box { position: relative; }
@@ -529,7 +548,7 @@
         <div>
           <div class="title">
             <span><strong>Habit</strong>at</span>
-            <span class="logo-icon">
+            <span class="logo-icon" id="logoIcon">
               <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M50 10 L85 30 L85 70 L50 90 L15 70 L15 30 Z" stroke="#0f172a" stroke-width="2.5" fill="none"/>
                 <path d="M50 25 L75 40 L75 60 L50 75 L25 60 L25 40 Z" stroke="#0f172a" stroke-width="2.5" fill="none"/>
@@ -540,6 +559,7 @@
           <div class="greeting" style="font-size: 10px; color: #475569; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 8px; font-weight: 400; line-height: 1.8;">
             Hi, <span id="userNameDisplay" onclick="startEditName()" style="cursor: pointer; border-bottom: 1px dotted #cbd5e1;" title="Click to edit name">Friend</span><input type="text" id="userNameInput" value="Friend" onblur="finishEditName()" onkeydown="if(event.key==='Enter') finishEditName(); if(event.key==='Escape') finishEditName()" style="display:none; background:transparent; border:none; border-bottom:1px solid #cbd5e1; color:#475569; padding:0; outline:none; font-size:10px; font-weight:400; letter-spacing:0.1em; text-transform:uppercase; width:100px">!
           </div>
+          <div id="bonusBadge" style="display:none; margin-top:12px; padding:6px 12px; font-size:9px; font-weight:300; letter-spacing:0.1em; text-transform:uppercase; color:#0f172a; border:1px solid #f59e0b; background:#fbbf24; white-space: nowrap;"></div>
         </div>
         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
           <div class="points-box">
@@ -549,8 +569,10 @@
               <div class="points-label">Points</div>
             </div>
           </div>
-          <div class="settings-container">
-            <div class="settings-icon" onclick="toggleSettings()">⚙</div>
+          <div style="display: flex; align-items: center; gap: 8px; align-self: flex-end;">
+            <div class="settings-container">
+              <div class="settings-icon" onclick="toggleSettings()">⚙</div>
+            </div>
           </div>
         </div>
       </div>
@@ -571,6 +593,14 @@
           <div class="help-section">
             <div class="help-title">Installing as Mobile App</div>
             <div class="help-text">For the best experience, add Habitat to your home screen. On Chrome (Android): Tap the three dots (⋮) at top right, then "Add to Home screen". On Safari (iPhone): Tap the Share button, scroll down and tap "Add to Home Screen". The app will open like a native app without browser bars.</div>
+          </div>
+          <div class="help-section">
+            <div class="help-title">Spin the Logo for a Surprise</div>
+            <div class="help-text">Tap or swipe the hexagon logo next to "HABITAT" for a surprise! You'll get either a motivational quote or a bonus. Swipe left for counter-clockwise spin, swipe right for clockwise spin, or just tap for a random direction.</div>
+          </div>
+          <div class="help-section">
+            <div class="help-title">How Bonuses Work</div>
+            <div class="help-text">When you spin the logo, you have about a 20% chance of receiving a bonus! Instant bonuses (+5 or +10 points) are added immediately. Multiplier bonuses (2x or 3x) activate for your next action only—a golden badge will appear below your name. Once you log an action with a multiplier, it's consumed and disappears. Important: If you delete an action that used a bonus, you won't get the bonus back—bonuses are one-time use only.</div>
           </div>
           <div class="help-section">
             <div class="help-title">Personalizing Your Habitat</div>
@@ -683,6 +713,16 @@
       </div>
     </div>
 
+    <div class="modal-overlay" id="quoteModal">
+      <div class="modal">
+        <div class="modal-text" id="quoteText" style="font-size: 18px; line-height: 1.8; font-style: normal; margin-bottom: 16px; text-align: center; font-weight: 300;"></div>
+        <div style="text-align: center; font-size: 11px; color: #64748b; font-weight: 300; margin-bottom: 24px; letter-spacing: 0.1em; text-transform: uppercase;" id="quoteAuthor"></div>
+        <div class="modal-buttons">
+          <button class="modal-btn" onclick="closeQuoteModal()" style="background:#0f172a;border-color:#0f172a;color:white;width:100%" id="quoteAcknowledgeBtn">Hell Yeah!</button>
+        </div>
+      </div>
+    </div>
+
     <div class="tabs">
       <button class="tab active" onclick="switchView('earn')" id="tab-earn">Earn</button>
       <button class="tab" onclick="switchView('rewards')" id="tab-rewards">Rewards</button>
@@ -701,6 +741,7 @@
       userName: 'Friend',
       showStepsLogger: true,
       categoryOrder: ['workouts', 'steps', 'nutrition', 'hydration', 'selfcare'],
+      activeBonus: null,
       rewards: [
         { id: 1, name: 'New Pair of Shoes', cost: 500, icon: '👟', redeemed: false },
         { id: 2, name: 'Spa Day', cost: 250, icon: '💆', redeemed: false },
@@ -878,6 +919,211 @@
       }
     }
 
+    const motivationalQuotes = [
+      { quote: "Every action you take is a vote for the type of person you wish to become.", author: "James Clear", type: "quote" },
+      { quote: "You do not rise to the level of your goals. You fall to the level of your systems.", author: "James Clear", type: "quote" },
+      { quote: "Habits are the compound interest of self-improvement.", author: "James Clear", type: "quote" },
+      { quote: "The secret to getting results that last is to never stop making improvements.", author: "James Clear", type: "quote" },
+      { quote: "Success is the product of daily habits—not once-in-a-lifetime transformations.", author: "James Clear", type: "quote" },
+      { quote: "Make it so easy you can't say no.", author: "BJ Fogg", type: "quote" },
+      { quote: "Motivation is what gets you started. Habit is what keeps you going.", author: "Jim Ryun", type: "quote" },
+      { quote: "You are what you repeatedly do. Excellence is not an act, but a habit.", author: "Aristotle", type: "quote" },
+      { quote: "The only way to do great work is to love what you do.", author: "Steve Jobs", type: "quote" },
+      { quote: "Progress, not perfection.", author: "Unknown", type: "quote" },
+      { quote: "Don't count the days, make the days count.", author: "Muhammad Ali", type: "quote" },
+      { quote: "The best time to plant a tree was 20 years ago. The second best time is now.", author: "Chinese Proverb", type: "quote" },
+      { quote: "Discipline is choosing between what you want now and what you want most.", author: "Unknown", type: "quote" },
+      { quote: "Small daily improvements are the key to staggering long-term results.", author: "Unknown", type: "quote" },
+      { quote: "The secret of getting ahead is getting started.", author: "Mark Twain", type: "quote" },
+      { quote: "It's not about having time. It's about making time.", author: "Unknown", type: "quote" },
+      // Bonuses (20% of total - 4 bonuses, 16 quotes)
+      { quote: "Bonus activated! Your next action is worth DOUBLE points!", author: "Bonus Round", type: "bonus", bonusType: "multiplier", bonusValue: 2 },
+      { quote: "Triple threat! Your next action is worth 3X points!", author: "Bonus Round", type: "bonus", bonusType: "multiplier", bonusValue: 3 },
+      { quote: "Instant reward! You just earned 5 bonus points!", author: "Bonus Round", type: "bonus", bonusType: "instant", bonusValue: 5 },
+      { quote: "Lucky spin! You just earned 10 bonus points!", author: "Bonus Round", type: "bonus", bonusType: "instant", bonusValue: 10 }
+    ];
+
+    const acknowledgements = ["Hell Yeah!", "Love It!", "Let's Go!", "I'm In!", "Absolutely!", "You Bet!"];
+
+    function showRandomQuote() {
+      const randomQuoteObj = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
+      const randomAck = acknowledgements[Math.floor(Math.random() * acknowledgements.length)];
+      
+      // Handle display differently for bonuses vs quotes
+      if (randomQuoteObj.type === 'bonus') {
+        document.getElementById('quoteText').textContent = randomQuoteObj.quote;
+        document.getElementById('quoteAuthor').textContent = '';
+        document.getElementById('quoteAuthor').style.display = 'none';
+      } else {
+        document.getElementById('quoteText').textContent = '"' + randomQuoteObj.quote + '"';
+        document.getElementById('quoteAuthor').textContent = '— ' + randomQuoteObj.author;
+        document.getElementById('quoteAuthor').style.display = 'block';
+      }
+      
+      document.getElementById('quoteAcknowledgeBtn').textContent = randomAck;
+      
+      // Handle bonuses
+      if (randomQuoteObj.type === 'bonus') {
+        if (randomQuoteObj.bonusType === 'instant') {
+          // Apply instant bonus immediately
+          state.totalPoints += randomQuoteObj.bonusValue;
+          state.history.unshift({
+            name: 'Bonus Points',
+            points: randomQuoteObj.bonusValue,
+            emoji: '🎁',
+            category: 'bonus',
+            timestamp: new Date().toLocaleString()
+          });
+          saveData();
+          updatePoints();
+        } else if (randomQuoteObj.bonusType === 'multiplier') {
+          // Set active multiplier
+          state.activeBonus = {
+            type: 'multiplier',
+            value: randomQuoteObj.bonusValue
+          };
+          saveData();
+          updateBonusBadge();
+        }
+      }
+      
+      document.getElementById('quoteModal').classList.add('show');
+    }
+
+    function closeQuoteModal() {
+      document.getElementById('quoteModal').classList.remove('show');
+    }
+
+    function updateBonusBadge() {
+      const badge = document.getElementById('bonusBadge');
+      if (!badge) return;
+      
+      if (state.activeBonus && state.activeBonus.type === 'multiplier') {
+        badge.textContent = state.activeBonus.value + 'x Bonus Active';
+        badge.style.display = 'block';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    function initLogoSpinner() {
+      const logo = document.getElementById('logoIcon');
+      if (!logo) return;
+      
+      let startX = 0;
+      let startY = 0;
+      let startTime = 0;
+      let isSwiping = false;
+      
+      logo.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        startTime = Date.now();
+        isSwiping = true;
+      }, { passive: true });
+      
+      logo.addEventListener('touchmove', (e) => {
+        if (!isSwiping) return;
+        e.preventDefault();
+      }, { passive: false });
+      
+      logo.addEventListener('touchend', (e) => {
+        if (!isSwiping) return;
+        
+        const endX = e.changedTouches[0].clientX;
+        const endY = e.changedTouches[0].clientY;
+        const endTime = Date.now();
+        
+        const deltaX = endX - startX;
+        const deltaY = endY - startY;
+        const deltaTime = endTime - startTime;
+        
+        // Check if it's a tap (very small movement, quick)
+        const isTap = Math.abs(deltaX) < 10 && Math.abs(deltaY) < 10 && deltaTime < 300;
+        
+        if (isTap) {
+          // Random direction for tap
+          const randomDirection = Math.random() > 0.5 ? 'cw' : 'ccw';
+          logo.classList.remove('spinning-cw', 'spinning-ccw');
+          logo.classList.add('spinning-' + randomDirection);
+          
+          setTimeout(() => {
+            logo.classList.remove('spinning-cw', 'spinning-ccw');
+            showRandomQuote();
+          }, 3000);
+        } else if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+          // Determine if horizontal swipe is more significant
+          // Remove any existing spinning classes
+          logo.classList.remove('spinning-cw', 'spinning-ccw');
+          
+          // Determine direction based on swipe
+          if (deltaX > 0) {
+            // Swipe right = clockwise
+            logo.classList.add('spinning-cw');
+          } else {
+            // Swipe left = counter-clockwise
+            logo.classList.add('spinning-ccw');
+          }
+          
+          // Remove class and show quote after animation
+          setTimeout(() => {
+            logo.classList.remove('spinning-cw', 'spinning-ccw');
+            showRandomQuote();
+          }, 3000);
+        }
+        
+        isSwiping = false;
+      }, { passive: true });
+      
+      // Also support mouse for desktop
+      let mouseDown = false;
+      let mouseStartX = 0;
+      let mouseStartTime = 0;
+      
+      logo.addEventListener('mousedown', (e) => {
+        mouseDown = true;
+        mouseStartX = e.clientX;
+        mouseStartTime = Date.now();
+      });
+      
+      document.addEventListener('mouseup', (e) => {
+        if (!mouseDown) return;
+        
+        const deltaX = e.clientX - mouseStartX;
+        const deltaTime = Date.now() - mouseStartTime;
+        
+        // Check if it's a click (very small movement)
+        const isClick = Math.abs(deltaX) < 10 && deltaTime < 300;
+        
+        if (isClick) {
+          // Random direction for click
+          const randomDirection = Math.random() > 0.5 ? 'cw' : 'ccw';
+          logo.classList.remove('spinning-cw', 'spinning-ccw');
+          logo.classList.add('spinning-' + randomDirection);
+          
+          setTimeout(() => {
+            logo.classList.remove('spinning-cw', 'spinning-ccw');
+            showRandomQuote();
+          }, 3000);
+        } else if (Math.abs(deltaX) > 10) {
+          logo.classList.remove('spinning-cw', 'spinning-ccw');
+          
+          if (deltaX > 0) {
+            logo.classList.add('spinning-cw');
+          } else {
+            logo.classList.add('spinning-ccw');
+          }
+          
+          setTimeout(() => {
+            logo.classList.remove('spinning-cw', 'spinning-ccw');
+            showRandomQuote();
+          }, 3000);
+        }
+        
+        mouseDown = false;
+      });
+    }
+
     function editGreeting() {
       const currentName = state.userName || 'Friend';
       const newName = prompt('What should we call you?', currentName);
@@ -906,6 +1152,7 @@
         userName: 'Friend',
         showStepsLogger: true,
         categoryOrder: ['workouts', 'steps', 'nutrition', 'hydration', 'selfcare'],
+        activeBonus: null,
         rewards: [
           { id: 1, name: 'New Pair of Shoes', cost: 500, icon: '👟', redeemed: false },
           { id: 2, name: 'Spa Day', cost: 250, icon: '💆', redeemed: false },
@@ -987,11 +1234,29 @@
         showCelebration(event.clientX, event.clientY);
       }
       
-      state.totalPoints += action.points;
-      state.history.unshift({ ...action, category, timestamp: new Date().toLocaleString() });
+      let pointsToAdd = action.points;
+      let bonusText = '';
+      
+      // Apply multiplier if active
+      if (state.activeBonus && state.activeBonus.type === 'multiplier') {
+        pointsToAdd = action.points * state.activeBonus.value;
+        bonusText = ' (' + state.activeBonus.value + 'x bonus)';
+        state.activeBonus = null; // Clear bonus after use
+      }
+      
+      state.totalPoints += pointsToAdd;
+      state.history.unshift({ 
+        ...action, 
+        category, 
+        points: pointsToAdd,
+        originalPoints: action.points,
+        bonusText: bonusText,
+        timestamp: new Date().toLocaleString() 
+      });
       if (state.history.length > 20) state.history.pop();
       saveData();
       updatePoints();
+      updateBonusBadge();
     }
 
     function logCustomSteps() {
@@ -1286,7 +1551,8 @@
         html += '<p style="text-align:center;color:#94a3b8;padding:48px 0;font-weight:300;font-size:14px">No activity yet</p>';
       } else {
         state.history.forEach((item, idx) => {
-          html += '<div class="history-item"><div class="history-left"><span style="font-size:20px">' + item.emoji + '</span><div style="flex:1"><div style="font-weight:300">' + item.name + '</div><div class="timestamp">' + item.timestamp + '</div></div></div><div class="history-right"><span style="font-weight:300">+' + item.points + '</span><button onclick="deleteHistoryItem(' + idx + ')" class="delete-btn">🗑️</button></div></div>';
+          const displayName = item.name + (item.bonusText || '');
+          html += '<div class="history-item"><div class="history-left"><span style="font-size:20px">' + item.emoji + '</span><div style="flex:1"><div style="font-weight:300">' + displayName + '</div><div class="timestamp">' + item.timestamp + '</div></div></div><div class="history-right"><span style="font-weight:300">+' + item.points + '</span><button onclick="deleteHistoryItem(' + idx + ')" class="delete-btn">🗑️</button></div></div>';
         });
       }
       html += '</div>';
@@ -1302,6 +1568,8 @@
         if (inputElem) inputElem.value = state.userName;
       }
       updateStepsToggleButton();
+      updateBonusBadge();
+      initLogoSpinner();
       renderEarn();
     }
 
