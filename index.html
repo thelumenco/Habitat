@@ -51,6 +51,21 @@
       z-index: 9999;
     }
     .confetti.square { transform: rotate(45deg); }
+    @keyframes celebrationPop {
+      0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+      50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(1) translateY(-40px); opacity: 0; }
+    }
+    .celebration-message {
+      position: fixed;
+      font-size: 14px;
+      font-weight: 300;
+      letter-spacing: 0.05em;
+      color: #0f172a;
+      pointer-events: none;
+      z-index: 9999;
+      animation: celebrationPop 1s ease-out forwards;
+    }
     #confettiContainer {
       position: fixed;
       inset: 0;
@@ -72,6 +87,7 @@
       padding: 32px;
       margin-bottom: 32px;
       position: relative;
+      z-index: 10;
     }
     .header::after {
       content: '';
@@ -84,14 +100,247 @@
       border-bottom: 2px solid #e2e8f0;
     }
     .header-content { display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; }
-    .title { font-size: 28px; font-weight: 300; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; }
+    .title { font-size: 28px; font-weight: 300; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
     .title strong { font-weight: 400; }
+    .logo-icon {
+      display: inline-block;
+      width: 28px;
+      height: 28px;
+      position: relative;
+      top: -1px;
+    }
+    .logo-icon svg {
+      width: 100%;
+      height: 100%;
+    }
     .subtitle { font-size: 10px; color: #64748b; letter-spacing: 0.1em; text-transform: uppercase; line-height: 1.8; }
     .points-box { position: relative; }
     .points-bg { position: absolute; inset: -4px; background: linear-gradient(135deg, #cbd5e1, #94a3b8); z-index: 0; }
     .points-inner { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; padding: 16px 32px; position: relative; z-index: 1; }
     .points-value { font-size: 28px; font-weight: 300; letter-spacing: 0.05em; }
     .points-label { font-size: 10px; opacity: 0.7; letter-spacing: 0.1em; text-transform: uppercase; }
+    
+    .settings-container {
+      position: relative;
+      margin-left: 0;
+      margin-top: 12px;
+    }
+    .settings-icon {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 20px;
+      color: #64748b;
+    }
+    .settings-icon:hover {
+      color: #0f172a;
+    }
+    .settings-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.5);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+      z-index: 9998;
+    }
+    .settings-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+    .settings-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 280px;
+      max-width: 80vw;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(10px);
+      border-left: 1px solid #e2e8f0;
+      transform: translateX(100%);
+      transition: transform 0.3s;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .settings-panel.open {
+      transform: translateX(0);
+    }
+    .settings-header {
+      padding: 24px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .settings-title {
+      font-weight: 300;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-size: 14px;
+      color: #0f172a;
+    }
+    .close-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 20px;
+      color: #64748b;
+      transition: all 0.2s;
+    }
+    .close-btn:hover {
+      color: #0f172a;
+    }
+    .settings-content {
+      padding: 24px;
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    .settings-btn {
+      width: 100%;
+      padding: 16px;
+      margin-bottom: 12px;
+      background: rgba(255,255,255,0.8);
+      border: 1px solid #cbd5e1;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 300;
+      font-size: 12px;
+      letter-spacing: 0.05em;
+      color: #1e293b;
+      text-align: left;
+    }
+    .settings-btn:hover {
+      border-color: #0f172a;
+      background: rgba(255,255,255,1);
+    }
+    .settings-btn .emoji {
+      font-size: 16px;
+    }
+    .help-content {
+      display: none;
+      padding: 24px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      margin-top: 16px;
+      font-size: 13px;
+      line-height: 1.8;
+      color: #475569;
+    }
+    .help-content.show {
+      display: block;
+    }
+    .help-section {
+      margin-bottom: 20px;
+    }
+    .help-section:last-child {
+      margin-bottom: 0;
+    }
+    .help-title {
+      font-weight: 400;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+    .help-text {
+      font-weight: 300;
+      font-size: 12px;
+      line-height: 1.7;
+      color: #64748b;
+    }
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+      z-index: 10000;
+      padding: 16px;
+    }
+    .modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    .modal {
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid #e2e8f0;
+      max-width: 400px;
+      width: 100%;
+      padding: 32px 24px 24px;
+      transform: scale(0.95);
+      transition: transform 0.3s;
+    }
+    .modal-overlay.show .modal {
+      transform: scale(1);
+    }
+    .modal-title {
+      font-weight: 300;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-size: 14px;
+      color: #0f172a;
+      margin-bottom: 16px;
+    }
+    .modal-text {
+      font-weight: 300;
+      font-size: 13px;
+      line-height: 1.7;
+      color: #64748b;
+      margin-bottom: 24px;
+    }
+    .modal-buttons {
+      display: flex;
+      gap: 8px;
+    }
+    .modal-btn {
+      flex: 1;
+      padding: 12px 24px;
+      border: 1px solid #cbd5e1;
+      background: transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 300;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-size: 10px;
+      color: #475569;
+    }
+    .modal-btn:hover {
+      background: #f8fafc;
+    }
+    .modal-btn-danger {
+      background: #dc2626;
+      color: white;
+      border-color: #dc2626;
+    }
+    .modal-btn-danger:hover {
+      background: #b91c1c;
+    }
+    
     .tabs {
       background: rgba(255,255,255,0.8);
       backdrop-filter: blur(10px);
@@ -263,15 +512,105 @@
     <div class="header">
       <div class="header-content">
         <div>
-          <div class="title"><strong>Habit</strong>at</div>
-          <div class="subtitle">Building an ecosystem of positive actions</div>
-        </div>
-        <div class="points-box">
-          <div class="points-bg"></div>
-          <div class="points-inner">
-            <div class="points-value" id="totalPoints">0</div>
-            <div class="points-label">Points</div>
+          <div class="title">
+            <span><strong>Habit</strong>at</span>
+            <span class="logo-icon">
+              <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M50 10 L85 30 L85 70 L50 90 L15 70 L15 30 Z" stroke="#0f172a" stroke-width="2.5" fill="none"/>
+                <path d="M50 25 L75 40 L75 60 L50 75 L25 60 L25 40 Z" stroke="#0f172a" stroke-width="2.5" fill="none"/>
+              </svg>
+            </span>
           </div>
+          <div class="subtitle">Building an ecosystem of positive actions</div>
+          <div class="greeting" style="font-size: 10px; color: #64748b; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 8px; font-weight: 300; line-height: 1.8;">
+            Hi, <span id="userNameDisplay" onclick="startEditName()" style="cursor: pointer; border-bottom: 1px dotted #cbd5e1;" title="Click to edit name">Friend</span><input type="text" id="userNameInput" value="Friend" onblur="finishEditName()" onkeydown="if(event.key==='Enter') finishEditName(); if(event.key==='Escape') finishEditName()" style="display:none; background:transparent; border:none; border-bottom:1px solid #cbd5e1; color:#64748b; padding:0; outline:none; font-size:10px; font-weight:300; letter-spacing:0.1em; text-transform:uppercase; width:100px">!
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+          <div class="points-box">
+            <div class="points-bg"></div>
+            <div class="points-inner">
+              <div class="points-value" id="totalPoints">0</div>
+              <div class="points-label">Points</div>
+            </div>
+          </div>
+          <div class="settings-container">
+            <div class="settings-icon" onclick="toggleSettings()">⚙</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-overlay" id="settingsOverlay" onclick="toggleSettings()"></div>
+    <div class="settings-panel" id="settingsPanel">
+      <div class="settings-header">
+        <div class="settings-title">Settings</div>
+        <button class="close-btn" onclick="toggleSettings()">×</button>
+      </div>
+      <div class="settings-content">
+        <button onclick="toggleHelp()" class="settings-btn" id="helpBtn">
+          <span class="emoji" id="helpIcon">▼</span>
+          <span>How to Use This App</span>
+        </button>
+        <div id="helpContent" class="help-content">
+          <div class="help-section">
+            <div class="help-title">Personalizing Your Habitat</div>
+            <div class="help-text">Click on your name in the header (it says "Friend" by default) to customize it. Type your name and press Enter to save it.</div>
+          </div>
+          <div class="help-section">
+            <div class="help-title">Data Storage and Privacy</div>
+            <div class="help-text">Your data is automatically saved to your browser on this device and remains completely private. All information is stored locally on your device only—nothing is sent to any server or cloud. Your data does not sync across devices or browsers. To use Habitat on another device, export your data and import it on the other device.</div>
+          </div>
+          <div class="help-section">
+            <div class="help-title">Earning Points</div>
+            <div class="help-text">Tap any action button to log it and earn points. Use the "Log Steps" field to enter custom step counts (5 points per 2,000 steps).</div>
+          </div>
+          <div class="help-section">
+            <div class="help-title">Customizing Categories</div>
+            <div class="help-text">Click any category name (like "Workouts" or "Nutrition") to rename it. Click "+ Add" in any category to create custom actions with your own emoji, name, and point values.</div>
+          </div>
+          <div class="help-section">
+            <div class="help-title">Managing Rewards</div>
+            <div class="help-text">In the Rewards tab, click "+ Add" to create custom rewards with an emoji, name, and point cost. When you have enough points, click "Redeem" to unlock a reward. Use "Undo" if you change your mind.</div>
+          </div>
+          <div class="help-section">
+            <div class="help-title">Deleting Items</div>
+            <div class="help-text">Use the 🗑️ button next to any action, reward, or history item to delete it. Note: deleting a history item will subtract those points from your total.</div>
+          </div>
+          <div class="help-section">
+            <div class="help-title">Export & Import Data</div>
+            <div class="help-text">Export your data to save a backup as a JSON file. Import allows you to restore from a previously exported file. This is useful for transferring data between devices or keeping backups.</div>
+          </div>
+        </div>
+        <button onclick="exportData(); toggleSettings();" class="settings-btn">
+          <span class="emoji">↓</span>
+          <span>Export Data</span>
+        </button>
+        <button onclick="importData(); toggleSettings();" class="settings-btn">
+          <span class="emoji">↑</span>
+          <span>Import Data</span>
+        </button>
+        <a href="mailto:mel@freshpages.co" class="settings-btn" style="text-decoration: none; color: inherit;">
+          <span class="emoji">✉</span>
+          <span>Give Feedback</span>
+        </a>
+        <button onclick="confirmReset()" class="settings-btn" style="border-color: #fca5a5; color: #991b1b;">
+          <span class="emoji">⟲</span>
+          <span>Reset All Data</span>
+        </button>
+      </div>
+      <div style="padding: 16px 24px; border-top: 1px solid #e2e8f0; font-size: 10px; color: #94a3b8; text-align: center; font-weight: 300; letter-spacing: 0.05em;">
+        Designed by The Lumen Co.<br>All rights reserved.
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="resetModal">
+      <div class="modal">
+        <div class="modal-title">Reset All Data?</div>
+        <div class="modal-text">This will permanently delete all your points, history, custom actions, and rewards. This action cannot be undone. Consider exporting your data first as a backup.</div>
+        <div class="modal-buttons">
+          <button class="modal-btn" onclick="closeResetModal()">Cancel</button>
+          <button class="modal-btn modal-btn-danger" onclick="resetAllData()">Reset</button>
         </div>
       </div>
     </div>
@@ -291,6 +630,7 @@
     let state = {
       totalPoints: 0,
       history: [],
+      userName: 'Friend',
       rewards: [
         { id: 1, name: 'New Pair of Shoes', cost: 500, icon: '👟', redeemed: false },
         { id: 2, name: 'Spa Day', cost: 250, icon: '💆', redeemed: false },
@@ -340,6 +680,100 @@
       selfcare: { bg: 'linear-gradient(to right, #881337, #831843)', border: '#fda4af' }
     };
 
+    function toggleSettings() {
+      const overlay = document.getElementById('settingsOverlay');
+      const panel = document.getElementById('settingsPanel');
+      overlay.classList.toggle('open');
+      panel.classList.toggle('open');
+    }
+
+    function toggleHelp() {
+      const helpContent = document.getElementById('helpContent');
+      const helpIcon = document.getElementById('helpIcon');
+      helpContent.classList.toggle('show');
+      
+      if (helpContent.classList.contains('show')) {
+        helpIcon.textContent = '▲';
+      } else {
+        helpIcon.textContent = '▼';
+      }
+    }
+
+    function editGreeting() {
+      const currentName = state.userName || 'Friend';
+      const newName = prompt('What should we call you?', currentName);
+      if (newName !== null && newName.trim() !== '') {
+        state.userName = newName.trim();
+        document.getElementById('userName').textContent = state.userName;
+        saveData();
+      }
+    }
+
+    // Make function globally accessible
+    window.editGreeting = editGreeting;
+
+    function confirmReset() {
+      document.getElementById('resetModal').classList.add('show');
+    }
+
+    function closeResetModal() {
+      document.getElementById('resetModal').classList.remove('show');
+    }
+
+    function resetAllData() {
+      const originalState = {
+        totalPoints: 0,
+        history: [],
+        userName: 'Friend',
+        rewards: [
+          { id: 1, name: 'New Pair of Shoes', cost: 500, icon: '👟', redeemed: false },
+          { id: 2, name: 'Spa Day', cost: 250, icon: '💆', redeemed: false },
+          { id: 3, name: 'New Workout Gear', cost: 150, icon: '👕', redeemed: false }
+        ],
+        actions: {
+          workouts: [
+            { id: 1, name: '45 min Gym Session', points: 20, emoji: '🏋️' },
+            { id: 2, name: 'Yoga Studio Class', points: 15, emoji: '🧘' },
+            { id: 3, name: '30 min Run', points: 18, emoji: '🏃' }
+          ],
+          steps: [
+            { id: 1, name: '2,000 steps', points: 5, emoji: '👟' },
+            { id: 2, name: '5,000 steps', points: 12, emoji: '🚶' },
+            { id: 3, name: '10,000 steps', points: 25, emoji: '🎯' }
+          ],
+          nutrition: [
+            { id: 1, name: 'High Protein Meal', points: 15, emoji: '🥩' },
+            { id: 2, name: 'Healthy Breakfast', points: 10, emoji: '🥣' },
+            { id: 3, name: 'Salad/Vegetables', points: 8, emoji: '🥗' }
+          ],
+          hydration: [
+            { id: 1, name: '2 bottles of water', points: 10, emoji: '💧' },
+            { id: 2, name: '4 bottles of water', points: 20, emoji: '💦' },
+            { id: 3, name: '8 glasses of water', points: 15, emoji: '🚰' }
+          ],
+          selfcare: [
+            { id: 1, name: 'Face mask', points: 5, emoji: '🧖' },
+            { id: 2, name: 'Meditation', points: 10, emoji: '🧘‍♀️' },
+            { id: 3, name: 'Spent time in nature', points: 15, emoji: '🌳' }
+          ]
+        },
+        categoryNames: {
+          workouts: 'Workouts',
+          steps: 'Steps',
+          nutrition: 'Nutrition',
+          hydration: 'Hydration',
+          selfcare: 'Self Care'
+        }
+      };
+      
+      state = originalState;
+      saveData();
+      updatePoints();
+      closeResetModal();
+      toggleSettings();
+      renderEarn();
+    }
+
     function loadData() {
       try {
         const saved = localStorage.getItem('habitat-data');
@@ -363,9 +797,14 @@
       document.getElementById('totalPoints').textContent = state.totalPoints;
     }
 
-    function logAction(actionId, category) {
+    function logAction(actionId, category, event) {
       const action = state.actions[category].find(a => a.id === actionId);
       if (!action) return;
+      
+      // Show celebration at click location
+      if (event) {
+        showCelebration(event.clientX, event.clientY);
+      }
       
       state.totalPoints += action.points;
       state.history.unshift({ ...action, category, timestamp: new Date().toLocaleString() });
@@ -448,6 +887,28 @@
       span.style.display = 'inline';
     }
 
+    function startEditName() {
+      const span = document.getElementById('userNameDisplay');
+      const input = document.getElementById('userNameInput');
+      span.style.display = 'none';
+      input.style.display = 'inline';
+      input.focus();
+      input.select();
+    }
+
+    function finishEditName() {
+      const span = document.getElementById('userNameDisplay');
+      const input = document.getElementById('userNameInput');
+      const newName = input.value.trim();
+      if (newName) {
+        state.userName = newName;
+        span.textContent = newName;
+        saveData();
+      }
+      input.style.display = 'none';
+      span.style.display = 'inline';
+    }
+
     function deleteHistoryItem(index) {
       state.totalPoints -= state.history[index].points;
       state.history.splice(index, 1);
@@ -518,6 +979,59 @@
       }
     }
 
+    function showCelebration(x, y) {
+      const messages = ['Nice!', 'Great Job!', 'Well Done!', '✓', 'Keep Going!', 'Amazing!'];
+      const message = messages[Math.floor(Math.random() * messages.length)];
+      
+      const element = document.createElement('div');
+      element.className = 'celebration-message';
+      element.textContent = message;
+      element.style.left = x + 'px';
+      element.style.top = y + 'px';
+      
+      document.body.appendChild(element);
+      
+      setTimeout(() => element.remove(), 1000);
+    }
+
+    function exportData() {
+      const dataStr = JSON.stringify(state, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'habitat-backup-' + new Date().toISOString().split('T')[0] + '.json';
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            try {
+              const imported = JSON.parse(event.target.result);
+              state = imported;
+              saveData();
+              updatePoints();
+              alert('Data imported successfully!');
+              if (state.currentView) switchView(state.currentView);
+              else renderEarn();
+            } catch (error) {
+              alert('Error importing file. Please make sure it\'s a valid Habitat backup file.');
+            }
+          };
+          reader.readAsText(file);
+        }
+      };
+      input.click();
+    }
+
     function switchView(view) {
       ['earn', 'rewards', 'history'].forEach(v => {
         document.getElementById('tab-' + v).classList.remove('active');
@@ -539,7 +1053,7 @@
         html += '<div id="addForm-' + category + '" class="hidden" style="padding:16px;background:#f8fafc"><div class="form-grid"><input type="text" id="emoji-' + category + '" placeholder="⭐" maxlength="2" class="input emoji-input"><input type="text" id="name-' + category + '" placeholder="Activity name" class="input"><input type="number" id="points-' + category + '" placeholder="Pts" class="input points-input"></div><div style="display:flex;gap:8px"><button onclick="addPreset(\'' + category + '\')" class="btn" style="flex:1">Add</button><button onclick="toggleAddForm(\'' + category + '\')" class="btn btn-secondary">Cancel</button></div></div>';
         html += '<div style="padding:12px">';
         items.forEach(action => {
-          html += '<div class="action-item"><button onclick="logAction(' + action.id + ',\'' + category + '\')" class="action-btn"><span style="display:flex;align-items:center"><span class="emoji">' + action.emoji + '</span><span class="name">' + action.name + '</span></span><span class="points">+' + action.points + '</span></button><button onclick="deletePreset(\'' + category + '\',' + action.id + ')" class="delete-btn">🗑️</button></div>';
+          html += '<div class="action-item"><button onclick="logAction(' + action.id + ',\'' + category + '\', event)" class="action-btn"><span style="display:flex;align-items:center"><span class="emoji">' + action.emoji + '</span><span class="name">' + action.name + '</span></span><span class="points">+' + action.points + '</span></button><button onclick="deletePreset(\'' + category + '\',' + action.id + ')" class="delete-btn">🗑️</button></div>';
         });
         html += '</div></div>';
       });
@@ -550,8 +1064,6 @@
       const container = document.getElementById('rewardsView');
       const unredeemed = state.rewards.filter(r => !r.redeemed);
       const redeemed = state.rewards.filter(r => r.redeemed);
-      
-      console.log('Rendering rewards. Redeemed count:', redeemed.length);
       
       let html = '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px"><h3 class="card-title" style="margin:0">Your Rewards</h3><button onclick="document.getElementById(\'addRewardForm\').classList.toggle(\'hidden\')" class="btn btn-secondary" style="padding:6px 16px;font-size:10px">+ Add</button></div>';
       html += '<div id="addRewardForm" class="hidden" style="background:#f8fafc;padding:16px;margin-bottom:24px;border:1px solid #e2e8f0"><div style="display:grid;grid-template-columns:auto 1fr;gap:8px;margin-bottom:12px"><input type="text" id="rewardIcon" value="🎁" class="input emoji-input"><input type="text" id="rewardName" placeholder="Reward name" class="input"></div><input type="number" id="rewardCost" placeholder="Points cost" class="input" style="margin-bottom:12px"><button onclick="addReward()" class="btn" style="width:100%">Add Reward</button></div>';
@@ -590,6 +1102,12 @@
 
     function render() {
       updatePoints();
+      if (state.userName) {
+        const displayElem = document.getElementById('userNameDisplay');
+        const inputElem = document.getElementById('userNameInput');
+        if (displayElem) displayElem.textContent = state.userName;
+        if (inputElem) inputElem.value = state.userName;
+      }
       renderEarn();
     }
 
@@ -597,7 +1115,6 @@
     if (document.readyState === 'loading') {
       window.addEventListener('DOMContentLoaded', loadData);
     } else {
-      // DOM is already loaded
       loadData();
     }
   </script>
