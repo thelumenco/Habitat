@@ -342,6 +342,19 @@
     .modal-btn-danger:hover {
       background: #b91c1c;
     }
+    .modal-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #cbd5e1;
+      background: rgba(255,255,255,0.5);
+      font-weight: 300;
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+    .modal-input:focus {
+      outline: none;
+      border-color: #0f172a;
+    }
     
     .tabs {
       background: rgba(255,255,255,0.8);
@@ -573,7 +586,7 @@
           </div>
           <div class="help-section">
             <div class="help-title">Customizing Categories</div>
-            <div class="help-text">Click any category name (like "Workouts" or "Nutrition") to rename it. Click "+ Add" in any category to create custom actions with your own emoji, name, and point values.</div>
+            <div class="help-text">Click any category name (like "Workouts" or "Nutrition") to rename it. Click "+ Add" in any category to create custom actions with your own emoji, name, and point values. You can also add new categories using the "+ Add New Category" button at the bottom of the Earn tab, and delete custom categories using the trash icon in the category header.</div>
           </div>
           <div class="help-section">
             <div class="help-title">Managing Rewards</div>
@@ -618,7 +631,11 @@
           <span class="emoji">↑</span>
           <span>Import Data</span>
         </button>
-        <a href="/cdn-cgi/l/email-protection#6409010824021601170c14050301174a070b" class="settings-btn" style="text-decoration: none; color: inherit;">
+        <button onclick="toggleStepsLogger()" class="settings-btn" id="stepsToggleBtn">
+          <span class="emoji">○</span>
+          <span id="stepsToggleText">Hide Steps Logger</span>
+        </button>
+        <a href="/cdn-cgi/l/email-protection#6209070a22040710060d15040706004f010d" class="settings-btn" style="text-decoration: none; color: inherit;">
           <span class="emoji">✉</span>
           <span>Give Feedback</span>
         </a>
@@ -643,6 +660,29 @@
       </div>
     </div>
 
+    <div class="modal-overlay" id="addCategoryModal">
+      <div class="modal">
+        <div class="modal-title">Add New Category</div>
+        <div class="modal-text">Enter a name for your new category:</div>
+        <input type="text" id="newCategoryName" class="modal-input" placeholder="Category name">
+        <div class="modal-buttons">
+          <button class="modal-btn" onclick="closeAddCategoryModal()">Cancel</button>
+          <button class="modal-btn modal-btn-danger" onclick="confirmAddCategory()" style="background:#0f172a;border-color:#0f172a">Create</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="deleteCategoryModal">
+      <div class="modal">
+        <div class="modal-title">Delete Category?</div>
+        <div class="modal-text" id="deleteCategoryText">This will permanently delete this category and all actions in it. This action cannot be undone.</div>
+        <div class="modal-buttons">
+          <button class="modal-btn" onclick="closeDeleteCategoryModal()">Cancel</button>
+          <button class="modal-btn modal-btn-danger" onclick="executeDeleteCategory()">Delete</button>
+        </div>
+      </div>
+    </div>
+
     <div class="tabs">
       <button class="tab active" onclick="switchView('earn')" id="tab-earn">Earn</button>
       <button class="tab" onclick="switchView('rewards')" id="tab-rewards">Rewards</button>
@@ -659,6 +699,8 @@
       totalPoints: 0,
       history: [],
       userName: 'Friend',
+      showStepsLogger: true,
+      categoryOrder: ['workouts', 'steps', 'nutrition', 'hydration', 'selfcare'],
       rewards: [
         { id: 1, name: 'New Pair of Shoes', cost: 500, icon: '👟', redeemed: false },
         { id: 2, name: 'Spa Day', cost: 250, icon: '💆', redeemed: false },
@@ -708,6 +750,18 @@
       selfcare: { bg: 'linear-gradient(to right, #881337, #831843)', border: '#fda4af' }
     };
 
+    const colorRotation = [
+      { bg: '#3b0764', border: '#e9d5ff' },
+      { bg: 'linear-gradient(to right, #1e3a8a, #312e81)', border: '#93c5fd' },
+      { bg: 'linear-gradient(to right, #065f46, #134e4a)', border: '#6ee7b7' },
+      { bg: 'linear-gradient(to right, #155e75, #075985)', border: '#67e8f9' },
+      { bg: 'linear-gradient(to right, #881337, #831843)', border: '#fda4af' }
+    ];
+
+    function getCategoryColor(index) {
+      return colorRotation[index % colorRotation.length];
+    }
+
     function toggleSettings() {
       const overlay = document.getElementById('settingsOverlay');
       const panel = document.getElementById('settingsPanel');
@@ -739,6 +793,91 @@
       }
     }
 
+    function toggleStepsLogger() {
+      state.showStepsLogger = !state.showStepsLogger;
+      saveData();
+      renderEarn();
+      updateStepsToggleButton();
+    }
+
+    function updateStepsToggleButton() {
+      const text = document.getElementById('stepsToggleText');
+      if (text) {
+        text.textContent = state.showStepsLogger ? 'Hide Steps Logger' : 'Show Steps Logger';
+      }
+    }
+
+    function addNewCategory() {
+      document.getElementById('newCategoryName').value = '';
+      document.getElementById('addCategoryModal').classList.add('show');
+      setTimeout(() => document.getElementById('newCategoryName').focus(), 100);
+    }
+    
+    window.addNewCategory = addNewCategory;
+
+    function closeAddCategoryModal() {
+      document.getElementById('addCategoryModal').classList.remove('show');
+    }
+
+    function confirmAddCategory() {
+      const categoryName = document.getElementById('newCategoryName').value.trim();
+      if (!categoryName) {
+        alert('Please enter a category name.');
+        return;
+      }
+      
+      const categoryId = 'custom_' + Date.now();
+      
+      state.categoryOrder.push(categoryId);
+      state.actions[categoryId] = [];
+      state.categoryNames[categoryId] = categoryName;
+      
+      saveData();
+      closeAddCategoryModal();
+      renderEarn();
+    }
+
+    function deleteCategory(categoryId) {
+      // Don't allow deleting if it's the last category
+      if (state.categoryOrder.length <= 1) {
+        alert('You must have at least one category.');
+        return;
+      }
+      
+      // Remove from order
+      state.categoryOrder = state.categoryOrder.filter(id => id !== categoryId);
+      
+      // Remove actions and category name
+      delete state.actions[categoryId];
+      delete state.categoryNames[categoryId];
+      
+      saveData();
+      renderEarn();
+    }
+    
+    window.deleteCategory = deleteCategory;
+
+    let categoryToDelete = null;
+
+    function confirmDeleteCategory(categoryId) {
+      const categoryName = state.categoryNames[categoryId] || categoryId;
+      document.getElementById('deleteCategoryText').textContent = `Delete "${categoryName}"? This will permanently delete this category and all actions in it. This action cannot be undone.`;
+      categoryToDelete = categoryId;
+      document.getElementById('deleteCategoryModal').classList.add('show');
+    }
+
+    function closeDeleteCategoryModal() {
+      document.getElementById('deleteCategoryModal').classList.remove('show');
+      categoryToDelete = null;
+    }
+
+    function executeDeleteCategory() {
+      if (categoryToDelete) {
+        deleteCategory(categoryToDelete);
+        closeDeleteCategoryModal();
+      }
+    }
+
     function editGreeting() {
       const currentName = state.userName || 'Friend';
       const newName = prompt('What should we call you?', currentName);
@@ -765,6 +904,8 @@
         totalPoints: 0,
         history: [],
         userName: 'Friend',
+        showStepsLogger: true,
+        categoryOrder: ['workouts', 'steps', 'nutrition', 'hydration', 'selfcare'],
         rewards: [
           { id: 1, name: 'New Pair of Shoes', cost: 500, icon: '👟', redeemed: false },
           { id: 2, name: 'Spa Day', cost: 250, icon: '💆', redeemed: false },
@@ -1086,17 +1227,29 @@
 
     function renderEarn() {
       const container = document.getElementById('earnView');
-      let html = '<div class="card"><h3 class="card-title">Log Steps</h3><div class="grid-input"><input type="number" id="customSteps" oninput="updateStepsPreview()" placeholder="Enter steps" class="input"><button onclick="logCustomSteps()" class="btn">Log</button></div><p id="stepsPreview" style="font-size:12px;color:#64748b"></p></div>';
+      let html = '';
+      
+      if (state.showStepsLogger) {
+        html += '<div class="card"><h3 class="card-title">Log Steps</h3><div class="grid-input"><input type="number" id="customSteps" oninput="updateStepsPreview()" placeholder="Enter steps" class="input"><button onclick="logCustomSteps()" class="btn">Log</button></div><p id="stepsPreview" style="font-size:12px;color:#64748b"></p></div>';
+      }
 
-      Object.entries(state.actions).forEach(([category, items]) => {
-        html += '<div class="card" style="padding:0;overflow:hidden"><div class="category-header" style="background:' + colors[category].bg + '"><span id="catName-' + category + '" onclick="startRenameCategory(\'' + category + '\')" style="cursor:pointer" title="Click to rename">' + state.categoryNames[category] + '</span><input type="text" id="catInput-' + category + '" value="' + state.categoryNames[category] + '" onblur="finishRenameCategory(\'' + category + '\')" onkeydown="if(event.key===\'Enter\') finishRenameCategory(\'' + category + '\'); if(event.key===\'Escape\') finishRenameCategory(\'' + category + '\')" style="display:none;background:rgba(255,255,255,0.2);border:none;border-bottom:1px solid rgba(255,255,255,0.4);color:white;padding:4px 8px;outline:none"><button onclick="toggleAddForm(\'' + category + '\')" class="btn" style="font-size:10px;padding:6px 16px">+ Add</button></div>';
-        html += '<div id="addForm-' + category + '" class="hidden" style="padding:16px;background:#f8fafc"><div class="form-grid"><input type="text" id="emoji-' + category + '" placeholder="⭐" maxlength="2" class="input emoji-input"><input type="text" id="name-' + category + '" placeholder="Activity name" class="input"><input type="number" id="points-' + category + '" placeholder="Pts" class="input points-input"></div><div style="display:flex;gap:8px"><button onclick="addPreset(\'' + category + '\')" class="btn" style="flex:1">Add</button><button onclick="toggleAddForm(\'' + category + '\')" class="btn btn-secondary">Cancel</button></div></div>';
+      state.categoryOrder.forEach((categoryId, index) => {
+        const items = state.actions[categoryId] || [];
+        const categoryName = state.categoryNames[categoryId] || categoryId;
+        const color = colors[categoryId] || getCategoryColor(index);
+        const isCustom = categoryId.startsWith('custom_');
+        
+        html += '<div class="card" style="padding:0;overflow:hidden"><div class="category-header" style="background:' + color.bg + '"><span id="catName-' + categoryId + '" onclick="startRenameCategory(\'' + categoryId + '\')" style="cursor:pointer" title="Click to rename">' + categoryName + '</span><input type="text" id="catInput-' + categoryId + '" value="' + categoryName + '" onblur="finishRenameCategory(\'' + categoryId + '\')" onkeydown="if(event.key===\'Enter\') finishRenameCategory(\'' + categoryId + '\'); if(event.key===\'Escape\') finishRenameCategory(\'' + categoryId + '\')" style="display:none;background:rgba(255,255,255,0.2);border:none;border-bottom:1px solid rgba(255,255,255,0.4);color:white;padding:4px 8px;outline:none"><div style="display:flex;gap:8px;align-items:center">' + (isCustom ? '<button onclick="confirmDeleteCategory(\'' + categoryId + '\')" style="background:transparent;border:none;color:rgba(255,255,255,0.6);cursor:pointer;font-size:14px;padding:4px 8px;transition:all 0.2s" onmouseover="this.style.color=\'rgba(255,255,255,1)\'" onmouseout="this.style.color=\'rgba(255,255,255,0.6)\'" title="Delete category">🗑️</button>' : '') + '<button onclick="toggleAddForm(\'' + categoryId + '\')" class="btn" style="font-size:10px;padding:6px 16px">+ Add</button></div></div>';
+        html += '<div id="addForm-' + categoryId + '" class="hidden" style="padding:16px;background:#f8fafc"><div class="form-grid"><input type="text" id="emoji-' + categoryId + '" placeholder="⭐" maxlength="2" class="input emoji-input"><input type="text" id="name-' + categoryId + '" placeholder="Activity name" class="input"><input type="number" id="points-' + categoryId + '" placeholder="Pts" class="input points-input"></div><div style="display:flex;gap:8px"><button onclick="addPreset(\'' + categoryId + '\')" class="btn" style="flex:1">Add</button><button onclick="toggleAddForm(\'' + categoryId + '\')" class="btn btn-secondary">Cancel</button></div></div>';
         html += '<div style="padding:12px">';
         items.forEach(action => {
-          html += '<div class="action-item"><button onclick="logAction(' + action.id + ',\'' + category + '\', event)" class="action-btn"><span style="display:flex;align-items:center"><span class="emoji">' + action.emoji + '</span><span class="name">' + action.name + '</span></span><span class="points">+' + action.points + '</span></button><button onclick="deletePreset(\'' + category + '\',' + action.id + ')" class="delete-btn">🗑️</button></div>';
+          html += '<div class="action-item"><button onclick="logAction(' + action.id + ',\'' + categoryId + '\', event)" class="action-btn"><span style="display:flex;align-items:center"><span class="emoji">' + action.emoji + '</span><span class="name">' + action.name + '</span></span><span class="points">+' + action.points + '</span></button><button onclick="deletePreset(\'' + categoryId + '\',' + action.id + ')" class="delete-btn">🗑️</button></div>';
         });
         html += '</div></div>';
       });
+      
+      html += '<div class="card" style="text-align:center;padding:32px"><button onclick="addNewCategory()" class="btn" style="width:100%">+ Add New Category</button></div>';
+      
       container.innerHTML = html;
     }
 
@@ -1148,6 +1301,7 @@
         if (displayElem) displayElem.textContent = state.userName;
         if (inputElem) inputElem.value = state.userName;
       }
+      updateStepsToggleButton();
       renderEarn();
     }
 
