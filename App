@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Habitat</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #f8fafc 0%, #e7e5e4 50%, #d6d3d1 100%);
+      min-height: 100vh;
+      padding: 16px;
+      color: #0f172a;
+    }
+    #loading { 
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #f8fafc 0%, #e7e5e4 50%, #d6d3d1 100%);
+      z-index: 9999;
+    }
+    #app { display: none; }
+    #app.loaded { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { 
+      border: 3px solid #cbd5e1; 
+      border-top-color: #0f172a; 
+      width: 64px; 
+      height: 64px; 
+      animation: spin 1s linear infinite; 
+      margin-bottom: 16px;
+    }
+    .loading-text { 
+      color: #64748b; 
+      font-weight: 300; 
+      letter-spacing: 0.1em; 
+      text-transform: uppercase; 
+      font-size: 12px; 
+    }
+    .container { max-width: 672px; margin: 0 auto; position: relative; }
+    .header {
+      background: rgba(255,255,255,0.8);
+      backdrop-filter: blur(10px);
+      border: 1px solid #e2e8f0;
+      padding: 32px;
+      margin-bottom: 32px;
+      position: relative;
+    }
+    .header::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 128px;
+      height: 128px;
+      border-left: 2px solid #e2e8f0;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .header-content { display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; }
+    .title { font-size: 28px; font-weight: 300; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; }
+    .title strong { font-weight: 400; }
+    .subtitle { font-size: 10px; color: #64748b; letter-spacing: 0.1em; text-transform: uppercase; line-height: 1.8; }
+    .points-box { position: relative; }
+    .points-bg { position: absolute; inset: -4px; background: linear-gradient(135deg, #cbd5e1, #94a3b8); z-index: 0; }
+    .points-inner { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; padding: 16px 32px; position: relative; z-index: 1; }
+    .points-value { font-size: 28px; font-weight: 300; letter-spacing: 0.05em; }
+    .points-label { font-size: 10px; opacity: 0.7; letter-spacing: 0.1em; text-transform: uppercase; }
+    .tabs {
+      background: rgba(255,255,255,0.8);
+      backdrop-filter: blur(10px);
+      border: 1px solid #e2e8f0;
+      padding: 4px;
+      margin-bottom: 32px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+    }
+    .tab {
+      padding: 16px;
+      border: none;
+      background: transparent;
+      color: #64748b;
+      font-weight: 300;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-size: 12px;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s;
+    }
+    .tab:hover { background: #f8fafc; }
+    .tab.active { background: #0f172a; color: white; }
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #fbbf24;
+    }
+    .card {
+      background: rgba(255,255,255,0.8);
+      backdrop-filter: blur(10px);
+      border: 1px solid #e2e8f0;
+      padding: 24px;
+      margin-bottom: 24px;
+      position: relative;
+    }
+    .card-title {
+      font-weight: 300;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+    .input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #cbd5e1;
+      background: rgba(255,255,255,0.5);
+      font-weight: 300;
+      font-size: 14px;
+    }
+    .input:focus { outline: none; border-color: #0f172a; }
+    .btn {
+      padding: 12px 32px;
+      border: none;
+      background: #0f172a;
+      color: white;
+      font-weight: 300;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-size: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .btn:hover { background: #1e293b; }
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid #cbd5e1;
+      color: #475569;
+    }
+    .btn-secondary:hover { background: #f8fafc; }
+    .grid-input { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 12px; }
+    .category-header {
+      padding: 16px;
+      color: white;
+      font-weight: 300;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .action-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .action-btn {
+      flex: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      background: rgba(255,255,255,0.8);
+      border: 1px solid #cbd5e1;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .action-btn:hover { border-color: #0f172a; }
+    .action-btn .emoji { font-size: 20px; margin-right: 12px; }
+    .action-btn .name { font-weight: 300; color: #1e293b; }
+    .action-btn .points { font-weight: 300; }
+    .delete-btn {
+      padding: 12px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: #94a3b8;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .delete-btn:hover { background: rgba(255,255,255,0.8); border-color: #e2e8f0; color: #dc2626; }
+    .hidden { display: none !important; }
+    .reward-card {
+      border: 2px solid #e2e8f0;
+      background: rgba(255,255,255,0.5);
+      padding: 20px;
+      margin-bottom: 16px;
+      position: relative;
+    }
+    .reward-card.unlockable { border-color: #fbbf24; background: rgba(254, 243, 199, 0.3); }
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background: #e2e8f0;
+      margin: 16px 0 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    .progress-fill { height: 100%; background: #94a3b8; transition: width 0.3s; }
+    .progress-fill.ready { background: #fbbf24; }
+    .form-grid { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; margin-bottom: 12px; }
+    .emoji-input { width: 56px; text-align: center; font-size: 18px; }
+    .points-input { width: 96px; }
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      background: rgba(255,255,255,0.5);
+      border: 1px solid #e2e8f0;
+      margin-bottom: 8px;
+    }
+    .history-left { display: flex; align-items: center; gap: 12px; flex: 1; }
+    .history-right { display: flex; align-items: center; gap: 12px; }
+    .timestamp { font-size: 10px; color: #64748b; letter-spacing: 0.05em; text-transform: uppercase; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">Loading</div>
+  </div>
+
+  <div id="app" class="container">
+    <div class="header">
+      <div class="header-content">
+        <div>
+          <div class="title"><strong>Habit</strong>at</div>
+          <div class="subtitle">Building an ecosystem of positive actions</div>
+        </div>
+        <div class="points-box">
+          <div class="points-bg"></div>
+          <div class="points-inner">
+            <div class="points-value" id="totalPoints">0</div>
+            <div class="points-label">Points</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchView('earn')" id="tab-earn">Earn</button>
+      <button class="tab" onclick="switchView('rewards')" id="tab-rewards">Rewards</button>
+      <button class="tab" onclick="switchView('history')" id="tab-history">History</button>
+    </div>
+
+    <div id="earnView"></div>
+    <div id="rewardsView" class="hidden"></div>
+    <div id="historyView" class="hidden"></div>
+  </div>
+
+  <script>
+    let state = {
+      totalPoints: 0,
+      history: [],
+      rewards: [
+        { id: 1, name: 'New Pair of Shoes', cost: 500, icon: '👟', redeemed: false },
+        { id: 2, name: 'Spa Day', cost: 250, icon: '💆', redeemed: false },
+        { id: 3, name: 'New Workout Gear', cost: 150, icon: '👕', redeemed: false }
+      ],
+      actions: {
+        workouts: [
+          { id: 1, name: '45 min Gym Session', points: 20, emoji: '🏋️' },
+          { id: 2, name: 'Yoga Studio Class', points: 15, emoji: '🧘' },
+          { id: 3, name: '30 min Run', points: 18, emoji: '🏃' }
+        ],
+        steps: [
+          { id: 1, name: '2,000 steps', points: 5, emoji: '👟' },
+          { id: 2, name: '5,000 steps', points: 12, emoji: '🚶' },
+          { id: 3, name: '10,000 steps', points: 25, emoji: '🎯' }
+        ],
+        nutrition: [
+          { id: 1, name: 'High Protein Meal', points: 15, emoji: '🥩' },
+          { id: 2, name: 'Healthy Breakfast', points: 10, emoji: '🥣' },
+          { id: 3, name: 'Salad/Vegetables', points: 8, emoji: '🥗' }
+        ],
+        hydration: [
+          { id: 1, name: '2 bottles of water', points: 10, emoji: '💧' },
+          { id: 2, name: '4 bottles of water', points: 20, emoji: '💦' },
+          { id: 3, name: '8 glasses of water', points: 15, emoji: '🚰' }
+        ],
+        selfcare: [
+          { id: 1, name: 'Face mask', points: 5, emoji: '🧖' },
+          { id: 2, name: 'Meditation', points: 10, emoji: '🧘‍♀️' },
+          { id: 3, name: 'Spent time in nature', points: 15, emoji: '🌳' }
+        ]
+      },
+      categoryNames: {
+        workouts: 'Workouts',
+        steps: 'Steps',
+        nutrition: 'Nutrition',
+        hydration: 'Hydration',
+        selfcare: 'Self Care'
+      }
+    };
+
+    const colors = {
+      workouts: { bg: 'linear-gradient(to right, #334155, #1e293b)', border: '#cbd5e1' },
+      steps: { bg: 'linear-gradient(to right, #1e3a8a, #312e81)', border: '#93c5fd' },
+      nutrition: { bg: 'linear-gradient(to right, #065f46, #134e4a)', border: '#6ee7b7' },
+      hydration: { bg: 'linear-gradient(to right, #155e75, #075985)', border: '#67e8f9' },
+      selfcare: { bg: 'linear-gradient(to right, #881337, #831843)', border: '#fda4af' }
+    };
+
+    function loadData() {
+      try {
+        const saved = localStorage.getItem('habitat-data');
+        if (saved) state = { ...state, ...JSON.parse(saved) };
+      } catch (e) {}
+      
+      setTimeout(() => {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('app').classList.add('loaded');
+        render();
+      }, 800);
+    }
+
+    function saveData() {
+      try {
+        localStorage.setItem('habitat-data', JSON.stringify(state));
+      } catch (e) {}
+    }
+
+    function updatePoints() {
+      document.getElementById('totalPoints').textContent = state.totalPoints;
+    }
+
+    function logAction(actionId, category) {
+      const action = state.actions[category].find(a => a.id === actionId);
+      if (!action) return;
+      
+      state.totalPoints += action.points;
+      state.history.unshift({ ...action, category, timestamp: new Date().toLocaleString() });
+      if (state.history.length > 20) state.history.pop();
+      saveData();
+      updatePoints();
+    }
+
+    function logCustomSteps() {
+      const steps = parseInt(document.getElementById('customSteps').value);
+      if (steps > 0) {
+        const points = Math.floor(steps / 2000) * 5;
+        if (points > 0) {
+          state.totalPoints += points;
+          state.history.unshift({
+            name: steps.toLocaleString() + ' steps',
+            points,
+            emoji: '👟',
+            category: 'steps',
+            timestamp: new Date().toLocaleString()
+          });
+          if (state.history.length > 20) state.history.pop();
+          saveData();
+          updatePoints();
+        }
+        document.getElementById('customSteps').value = '';
+        document.getElementById('stepsPreview').textContent = '';
+      }
+    }
+
+    function updateStepsPreview() {
+      const steps = parseInt(document.getElementById('customSteps').value);
+      const preview = document.getElementById('stepsPreview');
+      if (steps > 0) {
+        preview.textContent = '= ' + Math.floor(steps / 2000) * 5 + ' points';
+      } else {
+        preview.textContent = '';
+      }
+    }
+
+    function addPreset(category) {
+      const emoji = document.getElementById('emoji-' + category).value || '⭐';
+      const name = document.getElementById('name-' + category).value;
+      const points = parseInt(document.getElementById('points-' + category).value);
+      if (name && points) {
+        state.actions[category].push({ id: Date.now(), name, points, emoji });
+        saveData();
+        renderEarn();
+      }
+    }
+
+    function deletePreset(category, id) {
+      state.actions[category] = state.actions[category].filter(a => a.id !== id);
+      saveData();
+      renderEarn();
+    }
+
+    function toggleAddForm(category) {
+      document.getElementById('addForm-' + category).classList.toggle('hidden');
+    }
+
+    function deleteHistoryItem(index) {
+      state.totalPoints -= state.history[index].points;
+      state.history.splice(index, 1);
+      saveData();
+      updatePoints();
+      renderHistory();
+    }
+
+    function addReward() {
+      const icon = document.getElementById('rewardIcon').value || '🎁';
+      const name = document.getElementById('rewardName').value;
+      const cost = parseInt(document.getElementById('rewardCost').value);
+      if (name && cost) {
+        state.rewards.push({ id: Date.now(), name, cost, icon, redeemed: false });
+        document.getElementById('rewardIcon').value = '🎁';
+        document.getElementById('rewardName').value = '';
+        document.getElementById('rewardCost').value = '';
+        document.getElementById('addRewardForm').classList.add('hidden');
+        saveData();
+        renderRewards();
+      }
+    }
+
+    function deleteReward(id) {
+      state.rewards = state.rewards.filter(r => r.id !== id);
+      saveData();
+      renderRewards();
+    }
+
+    function redeemReward(id) {
+      const reward = state.rewards.find(r => r.id === id);
+      if (reward && state.totalPoints >= reward.cost && !reward.redeemed) {
+        state.totalPoints -= reward.cost;
+        reward.redeemed = true;
+        saveData();
+        updatePoints();
+        renderRewards();
+      }
+    }
+
+    function switchView(view) {
+      ['earn', 'rewards', 'history'].forEach(v => {
+        document.getElementById('tab-' + v).classList.remove('active');
+        document.getElementById(v + 'View').classList.add('hidden');
+      });
+      document.getElementById('tab-' + view).classList.add('active');
+      document.getElementById(view + 'View').classList.remove('hidden');
+      if (view === 'earn') renderEarn();
+      else if (view === 'rewards') renderRewards();
+      else renderHistory();
+    }
+
+    function renderEarn() {
+      const container = document.getElementById('earnView');
+      let html = '<div class="card"><h3 class="card-title">Log Steps</h3><div class="grid-input"><input type="number" id="customSteps" oninput="updateStepsPreview()" placeholder="Enter steps" class="input"><button onclick="logCustomSteps()" class="btn">Log</button></div><p id="stepsPreview" style="font-size:12px;color:#64748b"></p></div>';
+
+      Object.entries(state.actions).forEach(([category, items]) => {
+        html += '<div class="card" style="padding:0;overflow:hidden"><div class="category-header" style="background:' + colors[category].bg + '"><span>' + state.categoryNames[category] + '</span><button onclick="toggleAddForm(\'' + category + '\')" class="btn" style="font-size:10px;padding:6px 16px">+ Add</button></div>';
+        html += '<div id="addForm-' + category + '" class="hidden" style="padding:16px;background:#f8fafc"><div class="form-grid"><input type="text" id="emoji-' + category + '" placeholder="⭐" maxlength="2" class="input emoji-input"><input type="text" id="name-' + category + '" placeholder="Activity name" class="input"><input type="number" id="points-' + category + '" placeholder="Pts" class="input points-input"></div><div style="display:flex;gap:8px"><button onclick="addPreset(\'' + category + '\')" class="btn" style="flex:1">Add</button><button onclick="toggleAddForm(\'' + category + '\')" class="btn btn-secondary">Cancel</button></div></div>';
+        html += '<div style="padding:12px">';
+        items.forEach(action => {
+          html += '<div class="action-item"><button onclick="logAction(' + action.id + ',\'' + category + '\')" class="action-btn"><span style="display:flex;align-items:center"><span class="emoji">' + action.emoji + '</span><span class="name">' + action.name + '</span></span><span class="points">+' + action.points + '</span></button><button onclick="deletePreset(\'' + category + '\',' + action.id + ')" class="delete-btn">🗑️</button></div>';
+        });
+        html += '</div></div>';
+      });
+      container.innerHTML = html;
+    }
+
+    function renderRewards() {
+      const container = document.getElementById('rewardsView');
+      const unredeemed = state.rewards.filter(r => !r.redeemed);
+      const redeemed = state.rewards.filter(r => r.redeemed);
+      
+      let html = '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px"><h3 class="card-title" style="margin:0">Your Rewards</h3><button onclick="document.getElementById(\'addRewardForm\').classList.toggle(\'hidden\')" class="btn btn-secondary" style="padding:6px 16px;font-size:10px">+ Add</button></div>';
+      html += '<div id="addRewardForm" class="hidden" style="background:#f8fafc;padding:16px;margin-bottom:24px;border:1px solid #e2e8f0"><div style="display:grid;grid-template-columns:auto 1fr;gap:8px;margin-bottom:12px"><input type="text" id="rewardIcon" value="🎁" class="input emoji-input"><input type="text" id="rewardName" placeholder="Reward name" class="input"></div><input type="number" id="rewardCost" placeholder="Points cost" class="input" style="margin-bottom:12px"><button onclick="addReward()" class="btn" style="width:100%">Add Reward</button></div>';
+      
+      unredeemed.forEach(reward => {
+        const canRedeem = state.totalPoints >= reward.cost;
+        const progress = Math.min((state.totalPoints / reward.cost) * 100, 100);
+        html += '<div class="reward-card' + (canRedeem ? ' unlockable' : '') + '"><div style="display:flex;justify-content:space-between;margin-bottom:16px"><div style="display:flex;align-items:center;gap:12px"><span style="font-size:28px">' + reward.icon + '</span><div><div style="font-weight:300">' + reward.name + '</div><div style="font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:0.05em">' + reward.cost + ' pts</div></div></div><div style="display:flex;gap:8px"><button onclick="redeemReward(' + reward.id + ')" class="btn" style="padding:8px 24px;font-size:10px' + (!canRedeem ? ';background:#cbd5e1;color:#64748b;cursor:not-allowed' : '') + '">' + (canRedeem ? 'Redeem' : 'Locked') + '</button><button onclick="deleteReward(' + reward.id + ')" class="delete-btn">🗑️</button></div></div><div class="progress-bar"><div class="progress-fill' + (canRedeem ? ' ready' : '') + '" style="width:' + progress + '%"></div></div><div style="text-align:right;font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.05em">' + (canRedeem ? 'Ready to redeem' : (reward.cost - state.totalPoints) + ' more needed') + '</div></div>';
+      });
+      
+      if (redeemed.length > 0) {
+        html += '<div style="margin-top:32
