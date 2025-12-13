@@ -1516,7 +1516,7 @@
       const year = date.getFullYear();
       let hours = date.getHours();
       const minutes = String(date.getMinutes()).padStart(2, '0');
-      const ampm = hours >= 12 ? 'pm' : 'am';
+      const ampm = hours >= 12 ? 'PM' : 'AM';
       hours = hours % 12 || 12;
       return `${day} ${month} ${year}, ${hours}:${minutes}${ampm}`;
     } // Start at -1 for welcome screen
@@ -2647,7 +2647,7 @@
         html += '<div style="text-align: center; margin-top: 24px;"><button onclick="forceShowOnboarding()" class="btn btn-secondary" style="border-color: #94a3b8;">Edit Your Vision</button></div>';
         
         if (state.futureVision.lastUpdated) {
-          html += '<p style="font-size: 10px; color: #94a3b8; margin-top: 16px; font-weight: 300; text-align: center; text-transform: uppercase; letter-spacing: 0.05em;">Last updated on ' + state.futureVision.lastUpdated + '</p>';
+          html += '<p style="font-size: 10px; color: #64748b; margin-top: 16px; font-weight: 300; text-align: center; text-transform: uppercase; letter-spacing: 0.05em;">Last updated on ' + state.futureVision.lastUpdated + '</p>';
         }
       }
       
