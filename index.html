@@ -553,6 +553,34 @@
     .action-delete-btn:hover {
       background: #1e293b;
     }
+    .action-edit-btn {
+      position: absolute;
+      left: -80px;
+      top: 0;
+      bottom: 0;
+      width: 80px;
+      background: #0f172a;
+      color: white;
+      border: none;
+      font-size: 10px;
+      font-weight: 300;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: left 0.3s ease;
+    }
+    .action-item.swiped-right .action-item-wrapper {
+      transform: translateX(80px);
+    }
+    .action-item.swiped-right .action-edit-btn {
+      left: 0;
+    }
+    .action-edit-btn:hover {
+      background: #1e293b;
+    }
     .action-item.dragging {
       opacity: 0.5;
     }
@@ -603,6 +631,34 @@
       right: 0;
     }
     .reward-delete-btn:hover {
+      background: #1e293b;
+    }
+    .reward-edit-btn {
+      position: absolute;
+      left: -80px;
+      top: 0;
+      bottom: 0;
+      width: 80px;
+      background: #0f172a;
+      color: white;
+      border: none;
+      font-size: 10px;
+      font-weight: 300;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: left 0.3s ease;
+    }
+    .reward-item.swiped-right .reward-item-wrapper {
+      transform: translateX(80px);
+    }
+    .reward-item.swiped-right .reward-edit-btn {
+      left: 0;
+    }
+    .reward-edit-btn:hover {
       background: #1e293b;
     }
     .history-item-container {
@@ -829,7 +885,7 @@
           </div>
           <div class="help-section">
             <div class="help-title">Managing Items</div>
-            <div class="help-text">Swipe left on any preset, reward, or history item to reveal the delete button. Swipe right to close it. You can also drag and drop presets to reorder them within a category or move them between categories. Note: deleting a history item will subtract those points from your total.</div>
+            <div class="help-text">Swipe left on any preset, reward, or history item to reveal the delete button. Swipe right on presets and rewards to edit them (change emoji, name, and points/cost). You can also drag and drop presets to reorder them within a category or move them between categories. Note: deleting a history item will subtract those points from your total.</div>
           </div>
           <div class="help-section">
             <div class="help-title">Spin the Logo for a Surprise</div>
@@ -1152,9 +1208,11 @@
               // Swipe left - show delete
               item.classList.add('swiped');
             } else if (diffX < -30) {
-              // Swipe right - hide delete
-              item.classList.remove('swiped');
+              item.classList.remove('swiped-right');
+              // Swipe right - show edit
+              item.classList.add('swiped-right');
             }
+              item.classList.remove('swiped');
           }
         });
         
@@ -1169,7 +1227,7 @@
         // Close swipe when clicking outside
         document.addEventListener('click', (e) => {
           if (!item.contains(e.target)) {
-            item.classList.remove('swiped');
+            item.classList.add('swiped-right'); item.classList.remove('swiped'); item.classList.remove('swiped-right');
           }
         });
       });
@@ -2033,6 +2091,48 @@
       renderEarn();
     }
 
+    function editPreset(category, id) {
+      const action = state.actions[category].find(a => a.id === id);
+      if (!action) return;
+      
+      const newEmoji = prompt('Enter emoji:', action.emoji);
+      if (newEmoji === null) return;
+      
+      const newName = prompt('Enter name:', action.name);
+      if (newName === null) return;
+      
+      const newPoints = prompt('Enter points:', action.points);
+      if (newPoints === null) return;
+      
+      action.emoji = newEmoji || action.emoji;
+      action.name = newName || action.name;
+      action.points = parseInt(newPoints) || action.points;
+      
+      saveData();
+      renderEarn();
+    }
+
+    function editReward(id) {
+      const reward = state.rewards.find(r => r.id === id);
+      if (!reward) return;
+      
+      const newIcon = prompt('Enter emoji:', reward.icon);
+      if (newIcon === null) return;
+      
+      const newName = prompt('Enter reward name:', reward.name);
+      if (newName === null) return;
+      
+      const newCost = prompt('Enter points cost:', reward.cost);
+      if (newCost === null) return;
+      
+      reward.icon = newIcon || reward.icon;
+      reward.name = newName || reward.name;
+      reward.cost = parseInt(newCost) || reward.cost;
+      
+      saveData();
+      renderRewards();
+    }
+
     function toggleAddForm(category) {
       document.getElementById('addForm-' + category).classList.toggle('hidden');
     }
@@ -2182,8 +2282,8 @@
               // Swipe left - show delete
               item.classList.add('swiped');
             } else if (diffX < -30) {
-              // Swipe right - hide delete
-              item.classList.remove('swiped');
+              // Swipe right - show edit
+              item.classList.add('swiped-right'); item.classList.remove('swiped'); item.classList.remove('swiped-right');
             }
           }
         });
@@ -2192,14 +2292,16 @@
           if (isSwiping) {
             e.preventDefault();
           }
-          touchStartX = 0;
+              item.classList.add('swiped');
           touchStartY = 0;
+              item.classList.remove('swiped-right');
         });
-        
+              item.classList.add('swiped-right');
         // Close swipe when clicking outside
+              item.classList.remove('swiped');
         document.addEventListener('click', (e) => {
           if (!item.contains(e.target)) {
-            item.classList.remove('swiped');
+            item.classList.add('swiped-right'); item.classList.remove('swiped'); item.classList.remove('swiped-right');
           }
         });
       });
@@ -2236,8 +2338,8 @@
               // Swipe left - show delete
               item.classList.add('swiped');
             } else if (diffX < -30) {
-              // Swipe right - hide delete
-              item.classList.remove('swiped');
+              // Swipe right - show edit
+              item.classList.add('swiped-right'); item.classList.remove('swiped'); item.classList.remove('swiped-right');
             }
           }
         });
@@ -2253,7 +2355,7 @@
         // Close swipe when clicking outside
         document.addEventListener('click', (e) => {
           if (!item.contains(e.target)) {
-            item.classList.remove('swiped');
+            item.classList.add('swiped-right'); item.classList.remove('swiped'); item.classList.remove('swiped-right');
           }
         });
       });
@@ -2362,6 +2464,7 @@
         html += '<div style="padding:12px">';
         items.forEach(action => {
           html += '<div class="action-item" draggable="true" data-action-id="' + action.id + '" data-category="' + categoryId + '">';
+          html += '<button onclick="editPreset(\'' + categoryId + '\',' + action.id + ')" class="action-edit-btn">Edit</button>';
           html += '<div class="action-item-wrapper">';
           html += '<button onclick="logAction(' + action.id + ',\'' + categoryId + '\', event)" class="action-btn" style="width:100%"><span style="display:flex;align-items:center"><span class="emoji">' + action.emoji + '</span><span class="name">' + action.name + '</span></span><span class="points">+' + action.points + '</span></button>';
           html += '</div>';
@@ -2389,6 +2492,7 @@
         const canRedeem = state.totalPoints >= reward.cost;
         const progress = Math.min((state.totalPoints / reward.cost) * 100, 100);
         html += '<div class="reward-item reward-card' + (canRedeem ? ' unlockable' : '') + '" data-reward-id="' + reward.id + '">';
+        html += '<button onclick="editReward(' + reward.id + ')" class="reward-edit-btn">Edit</button>';
         html += '<div class="reward-item-wrapper" style="flex-direction:column;align-items:stretch;gap:0;padding:20px;background:rgba(255,255,255,0.5);border:2px solid #e2e8f0">';
         html += '<div style="display:flex;justify-content:space-between;margin-bottom:16px"><div style="display:flex;align-items:center;gap:12px"><span style="font-size:28px">' + reward.icon + '</span><div><div style="font-weight:300">' + reward.name + '</div><div style="font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:0.05em">' + reward.cost + ' pts</div></div></div><button onclick="redeemReward(' + reward.id + ')" class="btn" style="padding:8px 24px;font-size:10px' + (!canRedeem ? ';background:#cbd5e1;color:#64748b;cursor:not-allowed' : '') + '">' + (canRedeem ? 'Redeem' : 'Locked') + '</button></div><div class="progress-bar"><div class="progress-fill' + (canRedeem ? ' ready' : '') + '" style="width:' + progress + '%"></div></div><div style="text-align:right;font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.05em">' + (canRedeem ? 'Ready to redeem' : (reward.cost - state.totalPoints) + ' more needed') + '</div>';
         html += '</div>';
