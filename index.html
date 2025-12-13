@@ -986,6 +986,28 @@
       </div>
     </div>
 
+    <div class="modal-overlay" id="editModal">
+      <div class="modal">
+        <div class="modal-title" id="editModalTitle">Edit Item</div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Emoji</label>
+          <input type="text" id="editEmoji" class="modal-input" maxlength="2" placeholder="⭐">
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Name</label>
+          <input type="text" id="editName" class="modal-input" placeholder="Item name">
+        </div>
+        <div style="margin-bottom: 24px;">
+          <label style="display: block; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;" id="editPointsLabel">Points</label>
+          <input type="number" id="editPoints" class="modal-input" placeholder="10">
+        </div>
+        <div class="modal-buttons">
+          <button class="modal-btn" onclick="closeEditModal()">Cancel</button>
+          <button class="modal-btn" onclick="saveEdit()">Save</button>
+        </div>
+      </div>
+    </div>
+
     <div class="modal-overlay" id="quoteModal">
       <div class="modal">
         <div class="modal-text" id="quoteText" style="font-size: 18px; line-height: 1.8; font-style: normal; margin-bottom: 16px; text-align: center; font-weight: 300;"></div>
@@ -1204,15 +1226,29 @@
             isSwiping = true;
             e.preventDefault();
             
+            // Check current state and handle accordingly
+            const isDeleteShowing = item.classList.contains('swiped');
+            const isEditShowing = item.classList.contains('swiped-right');
+            
             if (diffX > 30) {
-              // Swipe left - show delete
-              item.classList.add('swiped');
+              // Swipe left
+              if (isEditShowing) {
+                // Close edit
+                item.classList.remove('swiped-right');
+              } else if (!isDeleteShowing) {
+                // Show delete (only if nothing is showing)
+                item.classList.add('swiped');
+              }
             } else if (diffX < -30) {
-              item.classList.remove('swiped-right');
-              // Swipe right - show edit
-              item.classList.add('swiped-right');
+              // Swipe right
+              if (isDeleteShowing) {
+                // Close delete
+                item.classList.remove('swiped');
+              } else if (!isEditShowing) {
+                // Show edit (only if nothing is showing)
+                item.classList.add('swiped-right');
+              }
             }
-              item.classList.remove('swiped');
           }
         });
         
@@ -2091,46 +2127,72 @@
       renderEarn();
     }
 
+    let editContext = null;
+
     function editPreset(category, id) {
       const action = state.actions[category].find(a => a.id === id);
       if (!action) return;
       
-      const newEmoji = prompt('Enter emoji:', action.emoji);
-      if (newEmoji === null) return;
-      
-      const newName = prompt('Enter name:', action.name);
-      if (newName === null) return;
-      
-      const newPoints = prompt('Enter points:', action.points);
-      if (newPoints === null) return;
-      
-      action.emoji = newEmoji || action.emoji;
-      action.name = newName || action.name;
-      action.points = parseInt(newPoints) || action.points;
-      
-      saveData();
-      renderEarn();
+      editContext = { type: 'preset', category, id };
+      document.getElementById('editModalTitle').textContent = 'Edit Preset';
+      document.getElementById('editPointsLabel').textContent = 'Points';
+      document.getElementById('editEmoji').value = action.emoji;
+      document.getElementById('editName').value = action.name;
+      document.getElementById('editPoints').value = action.points;
+      document.getElementById('editModal').classList.add('show');
     }
 
     function editReward(id) {
       const reward = state.rewards.find(r => r.id === id);
       if (!reward) return;
       
-      const newIcon = prompt('Enter emoji:', reward.icon);
-      if (newIcon === null) return;
+      editContext = { type: 'reward', id };
+      document.getElementById('editModalTitle').textContent = 'Edit Reward';
+      document.getElementById('editPointsLabel').textContent = 'Cost (Points)';
+      document.getElementById('editEmoji').value = reward.icon;
+      document.getElementById('editName').value = reward.name;
+      document.getElementById('editPoints').value = reward.cost;
+      document.getElementById('editModal').classList.add('show');
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').classList.remove('show');
+      editContext = null;
+    }
+
+    function saveEdit() {
+      if (!editContext) return;
       
-      const newName = prompt('Enter reward name:', reward.name);
-      if (newName === null) return;
+      const emoji = document.getElementById('editEmoji').value;
+      const name = document.getElementById('editName').value;
+      const points = parseInt(document.getElementById('editPoints').value);
       
-      const newCost = prompt('Enter points cost:', reward.cost);
-      if (newCost === null) return;
+      if (!name || !points) {
+        alert('Please fill in all fields');
+        return;
+      }
       
-      reward.icon = newIcon || reward.icon;
-      reward.name = newName || reward.name;
-      reward.cost = parseInt(newCost) || reward.cost;
+      if (editContext.type === 'preset') {
+        const action = state.actions[editContext.category].find(a => a.id === editContext.id);
+        if (action) {
+          action.emoji = emoji || action.emoji;
+          action.name = name;
+          action.points = points;
+          saveData();
+          renderEarn();
+        }
+      } else if (editContext.type === 'reward') {
+        const reward = state.rewards.find(r => r.id === editContext.id);
+        if (reward) {
+          reward.icon = emoji || reward.icon;
+          reward.name = name;
+          reward.cost = points;
+          saveData();
+          renderRewards();
+        }
+      }
       
-      saveData();
-      renderRewards();
+      closeEditModal();
     }
 
     function toggleAddForm(category) {
@@ -2278,12 +2340,28 @@
             isSwiping = true;
             e.preventDefault();
             
+            // Check current state and handle accordingly
+            const isDeleteShowing = item.classList.contains('swiped');
+            const isEditShowing = item.classList.contains('swiped-right');
+            
             if (diffX > 30) {
-              // Swipe left - show delete
-              item.classList.add('swiped');
+              // Swipe left
+              if (isEditShowing) {
+                // Close edit
+                item.classList.remove('swiped-right');
+              } else if (!isDeleteShowing) {
+                // Show delete (only if nothing is showing)
+                item.classList.add('swiped');
+              }
             } else if (diffX < -30) {
-              // Swipe right - show edit
-              item.classList.add('swiped-right'); item.classList.remove('swiped'); item.classList.remove('swiped-right');
+              // Swipe right
+              if (isDeleteShowing) {
+                // Close delete
+                item.classList.remove('swiped');
+              } else if (!isEditShowing) {
+                // Show edit (only if nothing is showing)
+                item.classList.add('swiped-right');
+              }
             }
           }
         });
@@ -2292,16 +2370,15 @@
           if (isSwiping) {
             e.preventDefault();
           }
-              item.classList.add('swiped');
+          touchStartX = 0;
           touchStartY = 0;
-              item.classList.remove('swiped-right');
         });
-              item.classList.add('swiped-right');
+        
         // Close swipe when clicking outside
-              item.classList.remove('swiped');
         document.addEventListener('click', (e) => {
           if (!item.contains(e.target)) {
-            item.classList.add('swiped-right'); item.classList.remove('swiped'); item.classList.remove('swiped-right');
+            item.classList.remove('swiped');
+            item.classList.remove('swiped-right');
           }
         });
       });
