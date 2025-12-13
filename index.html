@@ -100,7 +100,8 @@
       border-left: 2px solid #e2e8f0;
       border-bottom: 2px solid #e2e8f0;
     }
-    .header-content { display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; }
+    .header-content { display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; gap: 16px; }
+    .header-content > div:first-child { flex: 1; min-width: 0; max-width: calc(100% - 140px); }
     .title { font-size: 28px; font-weight: 300; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
     .title strong { font-weight: 400; }
     .logo-icon {
@@ -150,7 +151,7 @@
       display: inline-block;
       animation: personLook 4s ease-in-out infinite;
     }
-    .subtitle { font-size: 10px; color: #64748b; letter-spacing: 0.1em; text-transform: uppercase; line-height: 1.8; }
+    .subtitle { font-size: 10px; color: #64748b; letter-spacing: 0.1em; text-transform: uppercase; line-height: 1.8; word-break: break-word; }
     .points-box { position: relative; }
     .points-bg { position: absolute; inset: -4px; background: linear-gradient(135deg, #cbd5e1, #94a3b8); z-index: 0; }
     .points-inner { background: linear-gradient(135deg, #1e293b, #0f172a); color: white; padding: 16px 32px; position: relative; z-index: 1; }
@@ -411,6 +412,7 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
       gap: 4px;
+      overflow: hidden;
     }
     .tab {
       padding: 16px;
@@ -424,17 +426,17 @@
       cursor: pointer;
       position: relative;
       transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      box-sizing: border-box;
     }
     .tab:hover { background: #f8fafc; }
-    .tab.active { background: #0f172a; color: white; }
-    .tab.active::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: #fbbf24;
+    .tab.active { 
+      background: #0f172a; 
+      color: white;
+      box-shadow: inset 0 -2px 0 0 #fbbf24;
     }
     .card {
       background: rgba(255,255,255,0.8);
@@ -548,7 +550,7 @@
     .onboarding-tooltip {
       position: absolute;
       top: 60px;
-      right: -10px;
+      right: -13px;
       background: #0f172a;
       color: white;
       padding: 12px 20px;
@@ -594,7 +596,7 @@
     }
     .action-btn:hover { border-color: #0f172a; }
     .action-btn .emoji { font-size: 20px; margin-right: 12px; }
-    .action-btn .name { font-weight: 300; color: #1e293b; }
+    .action-btn .name { font-weight: 300; color: #0f172a; }
     .action-btn .points { font-weight: 300; }
     .delete-btn {
       padding: 12px;
@@ -885,9 +887,9 @@
         q5: ''  // What are you most proud of about who you've become?
       },
       rewards: [
-        { id: 1, name: 'New Pair of Shoes', cost: 500, icon: '👟', redeemed: false },
-        { id: 2, name: 'Spa Day', cost: 250, icon: '💆', redeemed: false },
-        { id: 3, name: 'New Workout Gear', cost: 150, icon: '👕', redeemed: false }
+        { id: 1, name: 'Ice cream', cost: 80, icon: '🍦', redeemed: false },
+        { id: 2, name: 'New pair of shoes', cost: 250, icon: '👟', redeemed: false },
+        { id: 3, name: 'Spa day', cost: 300, icon: '💆', redeemed: false }
       ],
       actions: {
         workouts: [
@@ -1760,9 +1762,9 @@
           q5: ''
         },
         rewards: [
-          { id: 1, name: 'New Pair of Shoes', cost: 500, icon: '👟', redeemed: false },
-          { id: 2, name: 'Spa Day', cost: 250, icon: '💆', redeemed: false },
-          { id: 3, name: 'New Workout Gear', cost: 150, icon: '👕', redeemed: false }
+          { id: 1, name: 'Ice cream', cost: 80, icon: '🍦', redeemed: false },
+          { id: 2, name: 'New pair of shoes', cost: 250, icon: '👟', redeemed: false },
+          { id: 3, name: 'Spa day', cost: 300, icon: '💆', redeemed: false }
         ],
         actions: {
           workouts: [
@@ -2013,6 +2015,23 @@
       }
     }
 
+    function duplicateReward(id) {
+      const originalReward = state.rewards.find(r => r.id === id);
+      if (originalReward) {
+        const maxId = Math.max(...state.rewards.map(r => r.id), 0);
+        const newReward = {
+          id: maxId + 1,
+          name: originalReward.name,
+          cost: originalReward.cost,
+          icon: originalReward.icon,
+          redeemed: false
+        };
+        state.rewards.push(newReward);
+        saveData();
+        renderRewards();
+      }
+    }
+
     function showConfetti() {
       const container = document.getElementById('confettiContainer');
       const colors = ['#fbbf24', '#0f172a', '#94a3b8', '#e2e8f0'];
@@ -2148,7 +2167,7 @@
       if (redeemed.length > 0) {
         html += '<div style="margin-top:32px;padding-top:32px;border-top:1px solid #e2e8f0"><h4 style="font-weight:300;letter-spacing:0.1em;text-transform:uppercase;font-size:12px;margin-bottom:16px">Redeemed (' + redeemed.length + ')</h4>';
         redeemed.forEach(reward => {
-          html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f8fafc;border:1px solid #e2e8f0;margin-bottom:8px"><div style="display:flex;align-items:center;gap:12px"><span style="font-size:20px;opacity:0.5">' + reward.icon + '</span><span style="font-weight:300;color:#64748b">' + reward.name + '</span></div><button onclick="undoReward(' + reward.id + ')" style="font-size:10px;padding:6px 16px;border:1px solid #cbd5e1;background:white;color:#475569;cursor:pointer;letter-spacing:0.1em;text-transform:uppercase;font-weight:300">UNDO</button></div>';
+          html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f8fafc;border:1px solid #e2e8f0;margin-bottom:8px"><div style="display:flex;align-items:center;gap:12px"><span style="font-size:20px;opacity:0.5">' + reward.icon + '</span><span style="font-weight:300;color:#64748b">' + reward.name + '</span></div><div style="display:flex;gap:8px"><button onclick="duplicateReward(' + reward.id + ')" style="font-size:10px;padding:6px 16px;border:1px solid #cbd5e1;background:white;color:#475569;cursor:pointer;letter-spacing:0.1em;text-transform:uppercase;font-weight:300">DUPLICATE</button><button onclick="undoReward(' + reward.id + ')" style="font-size:10px;padding:6px 16px;border:1px solid #cbd5e1;background:white;color:#475569;cursor:pointer;letter-spacing:0.1em;text-transform:uppercase;font-weight:300">UNDO</button><button onclick="deleteReward(' + reward.id + ')" class="delete-btn">🗑️</button></div></div>';
         });
         html += '</div>';
       }
