@@ -733,7 +733,7 @@
           </div>
           <div class="help-section">
             <div class="help-title">Managing Presets</div>
-            <div class="help-text">Swipe right on any preset to reveal the delete button. Swipe left to close it. You can also drag and drop presets to reorder them within a category or move them between categories. For rewards and history items, use the 🗑️ button to delete. Note: deleting a history item will subtract those points from your total.</div>
+            <div class="help-text">Swipe left on any preset to reveal the delete button. Swipe right to close it. You can also drag and drop presets to reorder them within a category or move them between categories. For rewards and history items, use the 🗑️ button to delete. Note: deleting a history item will subtract those points from your total.</div>
           </div>
           <div class="help-section">
             <div class="help-title">Spin the Logo for a Surprise</div>
@@ -1052,11 +1052,11 @@
             isSwiping = true;
             e.preventDefault();
             
-            if (diffX < -30) {
-              // Swipe right - show delete
+            if (diffX > 30) {
+              // Swipe left - show delete
               item.classList.add('swiped');
-            } else if (diffX > 30) {
-              // Swipe left - hide delete
+            } else if (diffX < -30) {
+              // Swipe right - hide delete
               item.classList.remove('swiped');
             }
           }
@@ -1530,6 +1530,13 @@
     window.forceShowOnboarding = forceShowOnboarding;
     window.nextOnboardingQuestion = nextOnboardingQuestion;
     window.skipOnboarding = skipOnboarding;
+    window.showOnboardingTooltip = showOnboardingTooltip;
+    
+    // For testing - call this in console to reset and show tooltip: testTooltip()
+    window.testTooltip = function() {
+      localStorage.removeItem('tooltipShown');
+      showOnboardingTooltip();
+    };
 
     function showRandomQuote() {
       const randomQuoteObj = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
@@ -1804,6 +1811,7 @@
       
       state = originalState;
       saveData();
+      localStorage.removeItem('tooltipShown'); // Reset tooltip flag
       updatePoints();
       closeResetModal();
       toggleSettings();
@@ -2167,7 +2175,7 @@
       if (redeemed.length > 0) {
         html += '<div style="margin-top:32px;padding-top:32px;border-top:1px solid #e2e8f0"><h4 style="font-weight:300;letter-spacing:0.1em;text-transform:uppercase;font-size:12px;margin-bottom:16px">Redeemed (' + redeemed.length + ')</h4>';
         redeemed.forEach(reward => {
-          html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f8fafc;border:1px solid #e2e8f0;margin-bottom:8px"><div style="display:flex;align-items:center;gap:12px"><span style="font-size:20px;opacity:0.5">' + reward.icon + '</span><span style="font-weight:300;color:#64748b">' + reward.name + '</span></div><div style="display:flex;gap:8px"><button onclick="duplicateReward(' + reward.id + ')" style="font-size:10px;padding:6px 16px;border:1px solid #cbd5e1;background:white;color:#475569;cursor:pointer;letter-spacing:0.1em;text-transform:uppercase;font-weight:300">DUPLICATE</button><button onclick="undoReward(' + reward.id + ')" style="font-size:10px;padding:6px 16px;border:1px solid #cbd5e1;background:white;color:#475569;cursor:pointer;letter-spacing:0.1em;text-transform:uppercase;font-weight:300">UNDO</button><button onclick="deleteReward(' + reward.id + ')" class="delete-btn">🗑️</button></div></div>';
+          html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f8fafc;border:1px solid #e2e8f0;margin-bottom:8px;gap:16px"><div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0"><span style="font-size:20px;opacity:0.5;flex-shrink:0">' + reward.icon + '</span><span style="font-weight:300;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + reward.name + '</span></div><div style="display:flex;gap:8px;flex-shrink:0"><button onclick="duplicateReward(' + reward.id + ')" style="font-size:10px;padding:6px 16px;border:1px solid #cbd5e1;background:white;color:#475569;cursor:pointer;letter-spacing:0.1em;text-transform:uppercase;font-weight:300">DUPLICATE</button><button onclick="undoReward(' + reward.id + ')" style="font-size:10px;padding:6px 16px;border:1px solid #cbd5e1;background:white;color:#475569;cursor:pointer;letter-spacing:0.1em;text-transform:uppercase;font-weight:300">UNDO</button><button onclick="deleteReward(' + reward.id + ')" class="delete-btn">🗑️</button></div></div>';
         });
         html += '</div>';
       }
