@@ -1206,11 +1206,16 @@
         let touchStartX = 0;
         let touchStartY = 0;
         let isSwiping = false;
+        let startedWithDelete = false;
+        let startedWithEdit = false;
         
         item.addEventListener('touchstart', (e) => {
           touchStartX = e.touches[0].clientX;
           touchStartY = e.touches[0].clientY;
           isSwiping = false;
+          // Lock the initial state
+          startedWithDelete = item.classList.contains('swiped');
+          startedWithEdit = item.classList.contains('swiped-right');
         });
         
         item.addEventListener('touchmove', (e) => {
@@ -1226,26 +1231,22 @@
             isSwiping = true;
             e.preventDefault();
             
-            // Check current state and handle accordingly
-            const isDeleteShowing = item.classList.contains('swiped');
-            const isEditShowing = item.classList.contains('swiped-right');
-            
             if (diffX > 30) {
               // Swipe left
-              if (isEditShowing) {
-                // Close edit
+              if (startedWithEdit) {
+                // Close edit only
                 item.classList.remove('swiped-right');
-              } else if (!isDeleteShowing) {
-                // Show delete (only if nothing is showing)
+              } else if (!startedWithDelete && !startedWithEdit) {
+                // Show delete (only if started with nothing showing)
                 item.classList.add('swiped');
               }
             } else if (diffX < -30) {
               // Swipe right
-              if (isDeleteShowing) {
-                // Close delete
+              if (startedWithDelete) {
+                // Close delete only
                 item.classList.remove('swiped');
-              } else if (!isEditShowing) {
-                // Show edit (only if nothing is showing)
+              } else if (!startedWithEdit && !startedWithDelete) {
+                // Show edit (only if started with nothing showing)
                 item.classList.add('swiped-right');
               }
             }
@@ -2320,11 +2321,16 @@
         let touchStartX = 0;
         let touchStartY = 0;
         let isSwiping = false;
+        let startedWithDelete = false;
+        let startedWithEdit = false;
         
         item.addEventListener('touchstart', (e) => {
           touchStartX = e.touches[0].clientX;
           touchStartY = e.touches[0].clientY;
           isSwiping = false;
+          // Lock the initial state
+          startedWithDelete = item.classList.contains('swiped');
+          startedWithEdit = item.classList.contains('swiped-right');
         });
         
         item.addEventListener('touchmove', (e) => {
@@ -2340,26 +2346,22 @@
             isSwiping = true;
             e.preventDefault();
             
-            // Check current state and handle accordingly
-            const isDeleteShowing = item.classList.contains('swiped');
-            const isEditShowing = item.classList.contains('swiped-right');
-            
             if (diffX > 30) {
               // Swipe left
-              if (isEditShowing) {
-                // Close edit
+              if (startedWithEdit) {
+                // Close edit only
                 item.classList.remove('swiped-right');
-              } else if (!isDeleteShowing) {
-                // Show delete (only if nothing is showing)
+              } else if (!startedWithDelete && !startedWithEdit) {
+                // Show delete (only if started with nothing showing)
                 item.classList.add('swiped');
               }
             } else if (diffX < -30) {
               // Swipe right
-              if (isDeleteShowing) {
-                // Close delete
+              if (startedWithDelete) {
+                // Close delete only
                 item.classList.remove('swiped');
-              } else if (!isEditShowing) {
-                // Show edit (only if nothing is showing)
+              } else if (!startedWithEdit && !startedWithDelete) {
+                // Show edit (only if started with nothing showing)
                 item.classList.add('swiped-right');
               }
             }
