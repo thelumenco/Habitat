@@ -574,7 +574,7 @@
       background: #f8fafc;
       border: 1px solid #e2e8f0;
       margin-bottom: 8px;
-      gap: 12px;
+      gap: 20px;
       transition: transform 0.3s ease;
     }
     .reward-item.swiped .reward-item-wrapper {
@@ -731,14 +731,12 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 16px;
-      background: rgba(255,255,255,0.5);
-      border: 1px solid #e2e8f0;
-      margin-bottom: 8px;
+      padding: 16px 0;
+      width: 100%;
     }
-    .history-left { display: flex; align-items: center; gap: 12px; flex: 1; }
-    .history-right { display: flex; align-items: center; gap: 12px; }
-    .timestamp { font-size: 10px; color: #64748b; letter-spacing: 0.05em; text-transform: uppercase; }
+    .history-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; padding-right: 16px; }
+    .history-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+    .timestamp { font-size: 10px; color: #64748b; letter-spacing: 0.05em; text-transform: uppercase; margin-top: 6px; display: block; }
     .hidden { display: none !important; }
   </style>
 </head>
@@ -1413,7 +1411,20 @@
       { key: 'q5', question: 'What are you most proud of about who you\'ve become?', placeholder: 'Your biggest achievement or transformation...' }
     ];
 
-    let currentOnboardingQuestion = -1; // Start at -1 for welcome screen
+    let currentOnboardingQuestion = -1;
+
+    function formatTimestamp() {
+      const date = new Date();
+      const day = date.getDate();
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const month = monthNames[date.getMonth()];
+      const year = date.getFullYear();
+      let hours = date.getHours();
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const ampm = hours >= 12 ? 'pm' : 'am';
+      hours = hours % 12 || 12;
+      return `${day} ${month} ${year}, ${hours}:${minutes}${ampm}`;
+    } // Start at -1 for welcome screen
 
     function showOnboarding() {
       // Only show automatically if not completed
@@ -1587,7 +1598,7 @@
 
     function completeOnboarding() {
       state.futureVision.completed = true;
-      state.futureVision.lastUpdated = new Date().toLocaleString();
+      state.futureVision.lastUpdated = formatTimestamp();
       saveData();
       document.getElementById('onboardingModal').classList.remove('show');
       showOnboardingTooltip();
@@ -1663,7 +1674,7 @@
             points: randomQuoteObj.bonusValue,
             emoji: '🎁',
             category: 'bonus',
-            timestamp: new Date().toLocaleString()
+            timestamp: formatTimestamp()
           });
           saveData();
           updatePoints();
@@ -1965,7 +1976,7 @@
         points: pointsToAdd,
         originalPoints: action.points,
         bonusText: bonusText,
-        timestamp: new Date().toLocaleString() 
+        timestamp: formatTimestamp() 
       });
       if (state.history.length > 20) state.history.pop();
       saveData();
@@ -1984,7 +1995,7 @@
             points,
             emoji: '👟',
             category: 'steps',
-            timestamp: new Date().toLocaleString()
+            timestamp: formatTimestamp()
           });
           if (state.history.length > 20) state.history.pop();
           saveData();
@@ -2104,6 +2115,7 @@
         showConfetti();
         state.totalPoints -= reward.cost;
         reward.redeemed = true;
+        reward.redeemedAt = formatTimestamp();
         saveData();
         updatePoints();
         setTimeout(() => renderRewards(), 100);
@@ -2115,6 +2127,7 @@
       if (reward && reward.redeemed) {
         state.totalPoints += reward.cost;
         reward.redeemed = false;
+        reward.redeemedAt = null;
         saveData();
         updatePoints();
         renderRewards();
@@ -2388,7 +2401,7 @@
         redeemed.forEach(reward => {
           html += '<div class="reward-item" data-reward-id="' + reward.id + '">';
           html += '<div class="reward-item-wrapper">';
-          html += '<div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0"><span style="font-size:20px;opacity:0.5;flex-shrink:0">' + reward.icon + '</span><span style="font-weight:300;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + reward.name + '</span></div><div style="display:flex;gap:12px;flex-shrink:0"><button onclick="duplicateReward(' + reward.id + ')" style="font-size:22px;padding:4px;border:none;background:transparent;color:#64748b;cursor:pointer;line-height:1;" title="Duplicate">⧉</button><button onclick="undoReward(' + reward.id + ')" style="font-size:22px;padding:4px;border:none;background:transparent;color:#64748b;cursor:pointer;line-height:1;" title="Undo">↺</button></div>';
+          html += '<div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0"><span style="font-size:20px;opacity:0.5;flex-shrink:0">' + reward.icon + '</span><div style="flex:1;min-width:0"><span style="font-weight:300;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block">' + reward.name + '</span>' + (reward.redeemedAt ? '<span style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;margin-top:4px;display:block">' + reward.redeemedAt + '</span>' : '') + '</div></div><div style="display:flex;gap:12px;flex-shrink:0"><button onclick="duplicateReward(' + reward.id + ')" style="font-size:18px;padding:4px;border:none;background:transparent;color:#64748b;cursor:pointer;line-height:1;" title="Duplicate">⧉</button><button onclick="undoReward(' + reward.id + ')" style="font-size:22px;padding:4px;border:none;background:transparent;color:#64748b;cursor:pointer;line-height:1;" title="Undo">↺</button></div>';
           html += '</div>';
           html += '<button onclick="deleteReward(' + reward.id + ')" class="reward-delete-btn">Delete</button>';
           html += '</div>';
@@ -2428,13 +2441,7 @@
       
       let html = '<div class="card" style="background: linear-gradient(to bottom right, rgba(139, 92, 246, 0.05), rgba(59, 130, 246, 0.05));">';
       html += '<h3 class="card-title">Your Future Self</h3>';
-      html += '<p style="font-size: 12px; color: #64748b; margin-bottom: 8px; font-weight: 300; text-align: center;">This is who you\'re becoming, ' + state.userName + '.</p>';
-      
-      if (state.futureVision.lastUpdated) {
-        html += '<p style="font-size: 10px; color: #94a3b8; margin-bottom: 24px; font-weight: 300; text-align: center; text-transform: uppercase; letter-spacing: 0.05em;">Last updated on ' + state.futureVision.lastUpdated + '</p>';
-      } else {
-        html += '<div style="margin-bottom: 24px;"></div>';
-      }
+      html += '<p style="font-size: 12px; color: #64748b; margin-bottom: 24px; font-weight: 300; text-align: center;">This is who you\'re becoming, ' + state.userName + '.</p>';
       
       if (!hasContent) {
         html += '<p style="text-align:center;color:#94a3b8;padding:48px 0;font-weight:300;font-size:14px">You haven\'t completed your vision yet.</p>';
@@ -2455,6 +2462,10 @@
           html += '</div>';
         });
         html += '<div style="text-align: center; margin-top: 24px;"><button onclick="forceShowOnboarding()" class="btn btn-secondary" style="border-color: #94a3b8;">Edit Your Vision</button></div>';
+        
+        if (state.futureVision.lastUpdated) {
+          html += '<p style="font-size: 10px; color: #94a3b8; margin-top: 16px; font-weight: 300; text-align: center; text-transform: uppercase; letter-spacing: 0.05em;">Last updated on ' + state.futureVision.lastUpdated + '</p>';
+        }
       }
       
       html += '</div>';
