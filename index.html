@@ -115,19 +115,25 @@
       user-select: none;
       -webkit-user-select: none;
       touch-action: none;
+      transform-origin: center center;
+      will-change: transform;
     }
     .logo-icon svg {
       width: 100%;
       height: 100%;
+      display: block;
     }
     .logo-icon.spinning-cw {
       animation: logoSpinCW 3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      transform-origin: center center;
     }
     .logo-icon.spinning-ccw {
       animation: logoSpinCCW 3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      transform-origin: center center;
     }
     .logo-icon.gentle-spin {
       animation: logoGentleSpin 2s ease-in-out;
+      transform-origin: center center;
     }
     @keyframes logoSpinCW {
       from { transform: rotate(0deg); }
@@ -438,6 +444,15 @@
       color: white;
       box-shadow: inset 0 -2px 0 0 #fbbf24;
     }
+    @media (max-width: 768px) {
+      .tab {
+        font-size: 10px;
+        color: #475569;
+      }
+      .tab.active {
+        color: white;
+      }
+    }
     .card {
       background: rgba(255,255,255,0.8);
       backdrop-filter: blur(10px);
@@ -547,10 +562,93 @@
     .category-card.drag-over-category {
       background: rgba(15, 23, 42, 0.05);
     }
+    .reward-item {
+      position: relative;
+      overflow: hidden;
+    }
+    .reward-item-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 8px;
+      gap: 12px;
+      transition: transform 0.3s ease;
+    }
+    .reward-item.swiped .reward-item-wrapper {
+      transform: translateX(-80px);
+    }
+    .reward-delete-btn {
+      position: absolute;
+      right: -80px;
+      top: 0;
+      bottom: 0;
+      width: 80px;
+      background: #0f172a;
+      color: white;
+      border: none;
+      font-size: 10px;
+      font-weight: 300;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: right 0.3s ease;
+    }
+    .reward-item.swiped .reward-delete-btn {
+      right: 0;
+    }
+    .reward-delete-btn:hover {
+      background: #1e293b;
+    }
+    .history-item-container {
+      position: relative;
+      overflow: hidden;
+    }
+    .history-item-wrapper {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 0;
+      border-bottom: 1px solid #f1f5f9;
+      transition: transform 0.3s ease;
+    }
+    .history-item-container.swiped .history-item-wrapper {
+      transform: translateX(-80px);
+    }
+    .history-delete-btn {
+      position: absolute;
+      right: -80px;
+      top: 0;
+      bottom: 0;
+      width: 80px;
+      background: #0f172a;
+      color: white;
+      border: none;
+      font-size: 10px;
+      font-weight: 300;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: right 0.3s ease;
+    }
+    .history-item-container.swiped .history-delete-btn {
+      right: 0;
+    }
+    .history-delete-btn:hover {
+      background: #1e293b;
+    }
     .onboarding-tooltip {
       position: absolute;
       top: 60px;
-      right: -13px;
+      right: -15px;
       background: #0f172a;
       color: white;
       padding: 12px 20px;
@@ -732,8 +830,8 @@
             <div class="help-text">In the Rewards tab, click "+ Add" to create custom rewards with an emoji, name, and point cost. When you have enough points, click "Redeem" to unlock a reward. Use "Undo" if you change your mind.</div>
           </div>
           <div class="help-section">
-            <div class="help-title">Managing Presets</div>
-            <div class="help-text">Swipe left on any preset to reveal the delete button. Swipe right to close it. You can also drag and drop presets to reorder them within a category or move them between categories. For rewards and history items, use the 🗑️ button to delete. Note: deleting a history item will subtract those points from your total.</div>
+            <div class="help-title">Managing Items</div>
+            <div class="help-text">Swipe left on any preset, reward, or history item to reveal the delete button. Swipe right to close it. You can also drag and drop presets to reorder them within a category or move them between categories. Note: deleting a history item will subtract those points from your total.</div>
           </div>
           <div class="help-section">
             <div class="help-title">Spin the Logo for a Surprise</div>
@@ -2040,6 +2138,114 @@
       }
     }
 
+    function initRewardSwipe() {
+      const rewardItems = document.querySelectorAll('.reward-item');
+
+      rewardItems.forEach(item => {
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let isSwiping = false;
+        
+        item.addEventListener('touchstart', (e) => {
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+          isSwiping = false;
+        });
+        
+        item.addEventListener('touchmove', (e) => {
+          if (!touchStartX) return;
+          
+          const touchCurrentX = e.touches[0].clientX;
+          const touchCurrentY = e.touches[0].clientY;
+          const diffX = touchStartX - touchCurrentX;
+          const diffY = Math.abs(touchStartY - touchCurrentY);
+          
+          // Only swipe if horizontal movement is greater than vertical
+          if (Math.abs(diffX) > 10 && Math.abs(diffX) > diffY) {
+            isSwiping = true;
+            e.preventDefault();
+            
+            if (diffX > 30) {
+              // Swipe left - show delete
+              item.classList.add('swiped');
+            } else if (diffX < -30) {
+              // Swipe right - hide delete
+              item.classList.remove('swiped');
+            }
+          }
+        });
+        
+        item.addEventListener('touchend', (e) => {
+          if (isSwiping) {
+            e.preventDefault();
+          }
+          touchStartX = 0;
+          touchStartY = 0;
+        });
+        
+        // Close swipe when clicking outside
+        document.addEventListener('click', (e) => {
+          if (!item.contains(e.target)) {
+            item.classList.remove('swiped');
+          }
+        });
+      });
+    }
+
+    function initHistorySwipe() {
+      const historyItems = document.querySelectorAll('.history-item-container');
+
+      historyItems.forEach(item => {
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let isSwiping = false;
+        
+        item.addEventListener('touchstart', (e) => {
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+          isSwiping = false;
+        });
+        
+        item.addEventListener('touchmove', (e) => {
+          if (!touchStartX) return;
+          
+          const touchCurrentX = e.touches[0].clientX;
+          const touchCurrentY = e.touches[0].clientY;
+          const diffX = touchStartX - touchCurrentX;
+          const diffY = Math.abs(touchStartY - touchCurrentY);
+          
+          // Only swipe if horizontal movement is greater than vertical
+          if (Math.abs(diffX) > 10 && Math.abs(diffX) > diffY) {
+            isSwiping = true;
+            e.preventDefault();
+            
+            if (diffX > 30) {
+              // Swipe left - show delete
+              item.classList.add('swiped');
+            } else if (diffX < -30) {
+              // Swipe right - hide delete
+              item.classList.remove('swiped');
+            }
+          }
+        });
+        
+        item.addEventListener('touchend', (e) => {
+          if (isSwiping) {
+            e.preventDefault();
+          }
+          touchStartX = 0;
+          touchStartY = 0;
+        });
+        
+        // Close swipe when clicking outside
+        document.addEventListener('click', (e) => {
+          if (!item.contains(e.target)) {
+            item.classList.remove('swiped');
+          }
+        });
+      });
+    }
+
     function showConfetti() {
       const container = document.getElementById('confettiContainer');
       const colors = ['#fbbf24', '#0f172a', '#94a3b8', '#e2e8f0'];
@@ -2169,19 +2375,30 @@
       unredeemed.forEach(reward => {
         const canRedeem = state.totalPoints >= reward.cost;
         const progress = Math.min((state.totalPoints / reward.cost) * 100, 100);
-        html += '<div class="reward-card' + (canRedeem ? ' unlockable' : '') + '"><div style="display:flex;justify-content:space-between;margin-bottom:16px"><div style="display:flex;align-items:center;gap:12px"><span style="font-size:28px">' + reward.icon + '</span><div><div style="font-weight:300">' + reward.name + '</div><div style="font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:0.05em">' + reward.cost + ' pts</div></div></div><div style="display:flex;gap:8px"><button onclick="redeemReward(' + reward.id + ')" class="btn" style="padding:8px 24px;font-size:10px' + (!canRedeem ? ';background:#cbd5e1;color:#64748b;cursor:not-allowed' : '') + '">' + (canRedeem ? 'Redeem' : 'Locked') + '</button><button onclick="deleteReward(' + reward.id + ')" class="delete-btn">🗑️</button></div></div><div class="progress-bar"><div class="progress-fill' + (canRedeem ? ' ready' : '') + '" style="width:' + progress + '%"></div></div><div style="text-align:right;font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.05em">' + (canRedeem ? 'Ready to redeem' : (reward.cost - state.totalPoints) + ' more needed') + '</div></div>';
+        html += '<div class="reward-item reward-card' + (canRedeem ? ' unlockable' : '') + '" data-reward-id="' + reward.id + '">';
+        html += '<div class="reward-item-wrapper" style="flex-direction:column;align-items:stretch;gap:0;padding:20px;background:rgba(255,255,255,0.5);border:2px solid #e2e8f0">';
+        html += '<div style="display:flex;justify-content:space-between;margin-bottom:16px"><div style="display:flex;align-items:center;gap:12px"><span style="font-size:28px">' + reward.icon + '</span><div><div style="font-weight:300">' + reward.name + '</div><div style="font-size:12px;color:#64748b;text-transform:uppercase;letter-spacing:0.05em">' + reward.cost + ' pts</div></div></div><button onclick="redeemReward(' + reward.id + ')" class="btn" style="padding:8px 24px;font-size:10px' + (!canRedeem ? ';background:#cbd5e1;color:#64748b;cursor:not-allowed' : '') + '">' + (canRedeem ? 'Redeem' : 'Locked') + '</button></div><div class="progress-bar"><div class="progress-fill' + (canRedeem ? ' ready' : '') + '" style="width:' + progress + '%"></div></div><div style="text-align:right;font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.05em">' + (canRedeem ? 'Ready to redeem' : (reward.cost - state.totalPoints) + ' more needed') + '</div>';
+        html += '</div>';
+        html += '<button onclick="deleteReward(' + reward.id + ')" class="reward-delete-btn">Delete</button>';
+        html += '</div>';
       });
       
       if (redeemed.length > 0) {
         html += '<div style="margin-top:32px;padding-top:32px;border-top:1px solid #e2e8f0"><h4 style="font-weight:300;letter-spacing:0.1em;text-transform:uppercase;font-size:12px;margin-bottom:16px">Redeemed (' + redeemed.length + ')</h4>';
         redeemed.forEach(reward => {
-          html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f8fafc;border:1px solid #e2e8f0;margin-bottom:8px;gap:16px"><div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0"><span style="font-size:20px;opacity:0.5;flex-shrink:0">' + reward.icon + '</span><span style="font-weight:300;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + reward.name + '</span></div><div style="display:flex;gap:8px;flex-shrink:0"><button onclick="duplicateReward(' + reward.id + ')" style="font-size:10px;padding:6px 16px;border:1px solid #cbd5e1;background:white;color:#475569;cursor:pointer;letter-spacing:0.1em;text-transform:uppercase;font-weight:300">DUPLICATE</button><button onclick="undoReward(' + reward.id + ')" style="font-size:10px;padding:6px 16px;border:1px solid #cbd5e1;background:white;color:#475569;cursor:pointer;letter-spacing:0.1em;text-transform:uppercase;font-weight:300">UNDO</button><button onclick="deleteReward(' + reward.id + ')" class="delete-btn">🗑️</button></div></div>';
+          html += '<div class="reward-item" data-reward-id="' + reward.id + '">';
+          html += '<div class="reward-item-wrapper">';
+          html += '<div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0"><span style="font-size:20px;opacity:0.5;flex-shrink:0">' + reward.icon + '</span><span style="font-weight:300;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + reward.name + '</span></div><div style="display:flex;gap:12px;flex-shrink:0"><button onclick="duplicateReward(' + reward.id + ')" style="font-size:22px;padding:4px;border:none;background:transparent;color:#64748b;cursor:pointer;line-height:1;" title="Duplicate">⧉</button><button onclick="undoReward(' + reward.id + ')" style="font-size:22px;padding:4px;border:none;background:transparent;color:#64748b;cursor:pointer;line-height:1;" title="Undo">↺</button></div>';
+          html += '</div>';
+          html += '<button onclick="deleteReward(' + reward.id + ')" class="reward-delete-btn">Delete</button>';
+          html += '</div>';
         });
         html += '</div>';
       }
       
       html += '</div>';
       container.innerHTML = html;
+      initRewardSwipe();
     }
 
     function renderHistory() {
@@ -2192,11 +2409,17 @@
       } else {
         state.history.forEach((item, idx) => {
           const displayName = item.name + (item.bonusText || '');
-          html += '<div class="history-item"><div class="history-left"><span style="font-size:20px">' + item.emoji + '</span><div style="flex:1"><div style="font-weight:300">' + displayName + '</div><div class="timestamp">' + item.timestamp + '</div></div></div><div class="history-right"><span style="font-weight:300">+' + item.points + '</span><button onclick="deleteHistoryItem(' + idx + ')" class="delete-btn">🗑️</button></div></div>';
+          html += '<div class="history-item-container" data-history-idx="' + idx + '">';
+          html += '<div class="history-item-wrapper">';
+          html += '<div class="history-item"><div class="history-left"><span style="font-size:20px">' + item.emoji + '</span><div style="flex:1"><div style="font-weight:300">' + displayName + '</div><div class="timestamp">' + item.timestamp + '</div></div></div><div class="history-right"><span style="font-weight:300">+' + item.points + '</span></div></div>';
+          html += '</div>';
+          html += '<button onclick="deleteHistoryItem(' + idx + ')" class="history-delete-btn">Delete</button>';
+          html += '</div>';
         });
       }
       html += '</div>';
       container.innerHTML = html;
+      initHistorySwipe();
     }
 
     function renderVision() {
